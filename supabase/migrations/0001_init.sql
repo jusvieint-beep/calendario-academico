@@ -246,8 +246,10 @@ begin
   end if;
 
   alter table _incoming add column content_hash text;
+  -- Supabase exige WHERE en todo UPDATE (extensión safeupdate).
   update _incoming
-     set content_hash = public.event_hash(category, type_label, title, event_date, start_time, end_time, link, description);
+     set content_hash = public.event_hash(category, type_label, title, event_date, start_time, end_time, link, description)
+   where content_hash is null;
 
   -- Comparación por ID_EVENTO → listas de la vista previa (y del resultado).
   select coalesce(jsonb_agg(jsonb_build_object(
