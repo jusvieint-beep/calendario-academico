@@ -1,0 +1,25 @@
+# dependencias
+node_modules/
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# variables de entorno: NUNCA subir secretos
+.env
+.env.*
+!.env.example
+
+# Vercel / Supabase local
+.vercel/
+supabase/.temp/
+supabase/.branches/
+
+# sistema / editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
