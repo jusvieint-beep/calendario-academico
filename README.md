@@ -250,6 +250,7 @@ Fechas y horas se guardan tal como vienen del Excel, en hora local de Colombia (
 - ID_EVENTO vacío: se asigna automáticamente.
 - Tipos: CLASE y SESION son sesiones; TRABAJO y ENTREGA son entregas. Se conserva la etiqueta escrita.
 - Sesión sin enlace: advertencia, no error.
+- Duplicados: si dos filas tienen el mismo tipo (clase/sesión o trabajo/entrega), nombre, fecha y hora, es un error y no se guarda. El nombre se compara sin mayúsculas, tildes ni espacios repetidos. Aplica al editor web y al Excel.
 - Clase en curso: visible en «Próximas actividades» hasta su hora de fin (o 1 hora después del inicio si no tiene fin).
 - Próximo a vencer: menos de 48 horas.
 - El calendario es un componente propio que reproduce el diseño aprobado, en lugar de FullCalendar: menos dependencias y control total del diseño.

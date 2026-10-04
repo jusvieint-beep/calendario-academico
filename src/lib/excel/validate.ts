@@ -137,12 +137,24 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
       warn(row, 'FECHA', cells.FECHA, `«${title}» tiene fecha pasada (${formatDateShort(date)}). Se mostrará como finalizada o vencida.`);
     }
 
-    const signature = `${title.toLowerCase()}|${date}|${start ?? ''}`;
-    if (seenSignature.has(signature)) {
-      warn(row, 'NOMBRE', title, `Posible duplicado de la fila ${seenSignature.get(signature)} (mismo nombre, fecha y hora).`, 'Si es el mismo evento, elimina una de las dos filas.');
-    } else {
-      seenSignature.set(signature, row);
+    // Duplicados: mismo tipo (clase/sesión o trabajo/entrega), nombre, fecha y hora → error, no se guarda.
+    // El nombre se compara sin mayúsculas, tildes ni espacios repetidos.
+    const signature = [
+      isSession ? 'SESION' : 'ENTREGA',
+      stripAccents(title).toLowerCase(),
+      date,
+      start ?? (isSession ? '' : 'sin hora')
+    ].join('|');
+    const firstRow = seenSignature.get(signature);
+    if (firstRow !== undefined) {
+      err(
+        row, 'NOMBRE', title,
+        `Evento duplicado: la fila ${firstRow} ya tiene ${isSession ? 'una clase o sesión' : 'un trabajo o entrega'} «${title}» el ${formatDateShort(date)}${start ? ` a las ${start}` : ' sin hora'}.`,
+        'Elimina una de las dos filas. Si son eventos distintos, cambia el nombre o la hora.'
+      );
+      continue;
     }
+    seenSignature.set(signature, row);
 
     rows.push({
       event_id: eventId,

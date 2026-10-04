@@ -117,14 +117,39 @@ test('validación: archivo vacío es un error (no puede borrar el calendario)', 
   assert.equal(r.errors[0].row, 0);
 });
 
-test('validación: advierte posibles duplicados y fechas pasadas', () => {
+test('validación: advierte fechas pasadas', () => {
   const r = validateRows([
-    row(2, { TIPO: 'TRABAJO', NOMBRE: 'Taller 1', FECHA: '30/09/2026', HORA_INICIO: '23:59' }),
-    row(3, { TIPO: 'TRABAJO', NOMBRE: 'taller 1', FECHA: '30/09/2026', HORA_INICIO: '23:59' })
+    row(2, { TIPO: 'TRABAJO', NOMBRE: 'Taller 1', FECHA: '30/09/2026', HORA_INICIO: '23:59' })
   ], TODAY);
   assert.equal(r.errors.length, 0);
-  assert.ok(r.warnings.some((w) => w.row === 3 && w.message.includes('duplicado')));
   assert.ok(r.warnings.some((w) => w.row === 2 && w.message.includes('fecha pasada')));
+});
+
+test('duplicados: mismo tipo, nombre, fecha y hora bloquean el guardado', () => {
+  const r = validateRows([
+    row(2, { TIPO: 'CLASE', NOMBRE: 'Matemáticas II', FECHA: '05/10/2026', HORA_INICIO: '08:00' }),
+    row(3, { TIPO: 'sesion', NOMBRE: '  matematicas   ii ', FECHA: '5/10/2026', HORA_INICIO: '8:00 AM' }), // CLASE y SESION = mismo tipo; sin tildes/mayúsculas/espacios
+    row(4, { TIPO: 'TRABAJO', NOMBRE: 'Informe', FECHA: '08/10/2026' }),
+    row(5, { TIPO: 'ENTREGA', NOMBRE: 'INFORME', FECHA: '08/10/2026' }) // ambos sin hora
+  ], TODAY);
+  const dup = r.errors.filter((e) => e.message.startsWith('Evento duplicado'));
+  assert.deepEqual(dup.map((e) => [e.row, e.column]), [[3, 'NOMBRE'], [5, 'NOMBRE']]);
+  assert.match(dup[0].message, /fila 2/);
+  assert.ok(dup[0].fix.length > 0);
+  assert.equal(r.rows.length, 0, 'con duplicados no se guarda nada');
+});
+
+test('duplicados: no son duplicados si cambia el tipo, la hora o la fecha', () => {
+  const r = validateRows([
+    row(2, { TIPO: 'CLASE', NOMBRE: 'Proyecto', FECHA: '05/10/2026', HORA_INICIO: '08:00' }),
+    row(3, { TIPO: 'ENTREGA', NOMBRE: 'Proyecto', FECHA: '05/10/2026', HORA_INICIO: '08:00' }), // otro tipo
+    row(4, { TIPO: 'CLASE', NOMBRE: 'Proyecto', FECHA: '05/10/2026', HORA_INICIO: '14:00' }), // otra hora
+    row(5, { TIPO: 'CLASE', NOMBRE: 'Proyecto', FECHA: '12/10/2026', HORA_INICIO: '08:00' }), // otra fecha
+    row(6, { TIPO: 'ENTREGA', NOMBRE: 'Taller', FECHA: '06/10/2026' }),
+    row(7, { TIPO: 'ENTREGA', NOMBRE: 'Taller', FECHA: '06/10/2026', HORA_INICIO: '18:00' }) // sin hora ≠ 18:00
+  ], TODAY);
+  assert.equal(r.errors.length, 0);
+  assert.equal(r.rows.length, 6);
 });
 
 const ev = (p: Partial<CalendarEvent>): CalendarEvent => ({
