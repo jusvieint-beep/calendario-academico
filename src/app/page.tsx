@@ -1,5 +1,6 @@
 import CalendarApp from '@/components/calendar/CalendarApp';
 import Header from '@/components/Header';
+import { LockIcon } from '@/components/Icons';
 import { fetchCalendarState, fetchEvents } from '@/lib/data';
 import { capitalize, formatDate, formatInstant, nowInBogota } from '@/lib/dates';
 import { APP_NAME, APP_SUBTITLE } from '@/lib/env';
@@ -28,7 +29,14 @@ export default async function HomePage() {
       <Header
         appName={APP_NAME}
         subtitle={APP_SUBTITLE}
-        right={<div className="today-pill">Hoy: <b>{capitalize(formatDate(now.date))}</b></div>}
+        right={
+          <>
+            <div className="today-pill">Hoy: <b>{capitalize(formatDate(now.date))}</b></div>
+            <a className="btn btn-ghost admin-link" href="/admin" title="Panel para actualizar el calendario">
+              <LockIcon />Administrar
+            </a>
+          </>
+        }
       />
       <CalendarApp events={events} serverNow={now} loadError={loadError} />
       {updatedAt && <p className="foot">Calendario actualizado el {formatInstant(updatedAt)}</p>}

@@ -314,3 +314,6 @@ table.sheet { width: 100%; min-width: 1120px; border-collapse: separate; border-
 .err-fix { color: var(--text-dim); }
 .paste-area { width: 100%; min-height: 180px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; padding: 10px; resize: vertical; tab-size: 12; }
 .paste-area:focus { border-color: var(--accent); outline: none; }
+
+/* Acceso discreto al panel desde la página pública */
+.admin-link { font-size: 12px; padding-inline: 10px; }
