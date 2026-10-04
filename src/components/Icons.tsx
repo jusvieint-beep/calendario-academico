@@ -34,8 +34,12 @@ export const ErrorIcon = (p: P) => (
   <svg {...base} {...p}><circle cx="12" cy="12" r="9.5" /><path d="M15 9l-6 6M9 9l6 6" /></svg>
 );
 
-export const CategoryIcon = ({ category, ...p }: P & { category: 'SESION' | 'ENTREGA' }) =>
-  category === 'SESION' ? <SessionIcon {...p} /> : <DeliveryIcon {...p} />;
+export const ForumIcon = (p: P) => (
+  <svg {...base} {...p}><path d="M14.5 4.5h-10a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2H6v3l3.5-3h5a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2z" /><path d="M16.5 8.5h3a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H18v2.5l-3-2.5h-3.5a2 2 0 0 1-1.6-.8" /></svg>
+);
+
+export const CategoryIcon = ({ category, ...p }: P & { category: 'SESION' | 'ENTREGA' | 'FORO' }) =>
+  category === 'SESION' ? <SessionIcon {...p} /> : category === 'FORO' ? <ForumIcon {...p} /> : <DeliveryIcon {...p} />;
 
 export const LockIcon = (p: P) => (
   <svg {...base} {...p}><rect x="4.5" y="10.5" width="15" height="10" rx="2.5" /><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" /></svg>

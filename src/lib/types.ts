@@ -1,7 +1,10 @@
 export type Category = 'SESION' | 'ENTREGA';
-export type TypeLabel = 'CLASE' | 'SESION' | 'TRABAJO' | 'ENTREGA';
+export type TypeLabel = 'CLASE' | 'SESION' | 'TRABAJO' | 'ENTREGA' | 'FORO';
 
-export const TYPE_LABELS: readonly TypeLabel[] = ['CLASE', 'SESION', 'TRABAJO', 'ENTREGA'];
+export const TYPE_LABELS: readonly TypeLabel[] = ['CLASE', 'SESION', 'TRABAJO', 'ENTREGA', 'FORO'];
+
+/** Cómo se ve un evento: los foros son entregas, pero con color, ícono y filtro propios. */
+export type Kind = 'SESION' | 'ENTREGA' | 'FORO';
 
 /** Evento tal como lo usa la interfaz. Fechas y horas en hora local de Colombia. */
 export interface CalendarEvent {

@@ -1,4 +1,4 @@
-import type { CalendarEvent } from './types';
+import type { CalendarEvent, Kind } from './types';
 import { addMinutes, capitalize, formatDate, formatTime, keyToMs, type NowCol } from './dates';
 
 /**
@@ -43,9 +43,14 @@ export function kindName(e: Pick<CalendarEvent, 'type_label'>): string {
     case 'CLASE': return 'Clase';
     case 'SESION': return 'Sesión';
     case 'TRABAJO': return 'Trabajo';
+    case 'FORO': return 'Foro';
     default: return 'Entrega';
   }
 }
+
+/** Foro → 'FORO'; el resto según su categoría. */
+export const kindOf = (e: Pick<CalendarEvent, 'category' | 'type_label'>): Kind =>
+  e.type_label === 'FORO' ? 'FORO' : e.category;
 
 export type DeliveryStatus = 'pendiente' | 'pronto' | 'vencido';
 

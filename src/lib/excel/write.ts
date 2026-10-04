@@ -70,8 +70,8 @@ export async function buildCalendarWorkbook(events: CalendarEvent[] = []): Promi
     row.getCell(6).numFmt = 'hh:mm';
 
     row.getCell(2).dataValidation = {
-      type: 'list', allowBlank: true, formulae: ['"CLASE,SESION,TRABAJO,ENTREGA"'],
-      showErrorMessage: true, errorTitle: 'Tipo no válido', error: 'Usa CLASE, SESION, TRABAJO o ENTREGA.',
+      type: 'list', allowBlank: true, formulae: ['"CLASE,SESION,TRABAJO,ENTREGA,FORO"'],
+      showErrorMessage: true, errorTitle: 'Tipo no válido', error: 'Usa CLASE, SESION, TRABAJO, ENTREGA o FORO.',
       showInputMessage: true, promptTitle: 'TIPO', prompt: COLUMNS[1].hint
     };
     row.getCell(4).dataValidation = {
@@ -109,7 +109,7 @@ export async function buildCalendarWorkbook(events: CalendarEvent[] = []): Promi
     ['• Para editar después, descarga el «Excel actual» desde /admin: ya trae los ID. No reutilices archivos viejos.', 'p'],
     ['• No cambies el nombre de la hoja «Calendario» ni los encabezados de la fila 1.', 'p'],
     ['• Fechas y horas de Colombia (UTC-5). Horas en formato 24 h: 08:00, 14:30, 23:59.', 'p'],
-    ['• CLASE y SESION necesitan HORA_INICIO. En TRABAJO y ENTREGA, HORA_INICIO es la hora límite; vacía = 11:59 PM.', 'p'],
+    ['• CLASE y SESION necesitan HORA_INICIO. En TRABAJO, ENTREGA y FORO, HORA_INICIO es la hora límite; vacía = 11:59 PM.', 'p'],
     ['• Un archivo con errores no modifica nada. La app indica fila, columna y cómo corregir cada error.', 'p']
   ];
   lines.forEach(([text, kind], i) => {

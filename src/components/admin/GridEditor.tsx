@@ -49,11 +49,12 @@ const BIG_DELETE_RATIO = 0.3;
 const EMPTY_START_ROWS = 5;
 const MAX_LISTED_ERRORS = 15;
 
-/** En entregas, la hora vacía significa 11:59 PM y la hora de fin no aplica. */
+/** En entregas y foros, la hora vacía significa 11:59 PM y la hora de fin no aplica. */
 function placeholderFor(key: ColumnKey, category: string): string | undefined {
-  if (category === 'ENTREGA') {
+  if (category === 'ENTREGA' || category === 'FORO') {
     if (key === 'HORA_INICIO') return '23:59';
-    if (key === 'HORA_FIN' || key === 'LINK') return 'No aplica';
+    if (key === 'HORA_FIN') return 'No aplica';
+    if (key === 'LINK') return category === 'FORO' ? 'https://… (enlace al foro)' : 'No aplica';
   }
   return PLACEHOLDER[key];
 }
@@ -70,7 +71,7 @@ function rowsFromEvents(events: CalendarEvent[]): Row[] {
 }
 
 const categoryOf = (type: string) =>
-  type === 'CLASE' || type === 'SESION' ? 'SESION' : type === 'TRABAJO' || type === 'ENTREGA' ? 'ENTREGA' : '';
+  type === 'CLASE' || type === 'SESION' ? 'SESION' : type === 'FORO' ? 'FORO' : type === 'TRABAJO' || type === 'ENTREGA' ? 'ENTREGA' : '';
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 

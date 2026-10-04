@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { parseDateCell, parseTimeCell, cellToLink, cellToText } from '../src/lib/excel/normalize.ts';
 import { validateRows, type RawRow } from '../src/lib/excel/validate.ts';
 import { normalizeHeader } from '../src/lib/excel/columns.ts';
-import { upcoming, isLive, deliveryStatus } from '../src/lib/events.ts';
+import { upcoming, isLive, deliveryStatus, kindOf, kindName } from '../src/lib/events.ts';
 import { formatTime, keyToMs } from '../src/lib/dates.ts';
 import type { CalendarEvent } from '../src/lib/types.ts';
 
@@ -191,4 +191,37 @@ test('formato de hora para la interfaz', () => {
   assert.equal(formatTime('08:00'), '8:00 AM');
   assert.equal(formatTime('23:59'), '11:59 PM');
   assert.equal(formatTime('12:00'), '12:00 PM');
+});
+
+test('FORO: se acepta, la hora es opcional (límite 11:59 PM) y es un tipo distinto para duplicados', () => {
+  const r = validateRows([
+    row(2, { TIPO: 'foro', NOMBRE: 'Foro unidad 2', FECHA: '07/10/2026', LINK: 'https://campus.edu.co/foro/2' }),
+    row(3, { TIPO: 'TRABAJO', NOMBRE: 'Foro unidad 2', FECHA: '07/10/2026' }), // mismo nombre, otro tipo → no es duplicado
+    row(4, { TIPO: 'FORO', NOMBRE: 'Debate final', FECHA: '09/10/2026', HORA_INICIO: '18:00', HORA_FIN: '19:00' })
+  ], TODAY);
+  assert.equal(r.errors.length, 0);
+  assert.equal(r.rows[0].type_label, 'FORO');
+  assert.equal(r.rows[0].start_time, null);
+  assert.equal(r.rows[0].link, 'https://campus.edu.co/foro/2');
+  assert.equal(r.rows[2].end_time, null, 'el foro no usa hora de fin');
+  assert.ok(!r.warnings.some((w) => w.row === 2 && w.column === 'LINK'), 'un foro sin enlace no genera advertencia de sesión');
+
+  const dup = validateRows([
+    row(2, { TIPO: 'FORO', NOMBRE: 'Debate', FECHA: '09/10/2026' }),
+    row(3, { TIPO: 'Foro', NOMBRE: 'debate', FECHA: '09/10/2026' })
+  ], TODAY);
+  assert.equal(dup.errors.length, 1);
+  assert.match(dup.errors[0].message, /un foro/);
+});
+
+test('FORO: se ve como foro pero vence como una entrega', () => {
+  const now = { date: '2026-10-07', time: '10:00' };
+  const foro = ev({ event_id: 'f', category: 'ENTREGA', type_label: 'FORO', event_date: '2026-10-07' });
+  assert.equal(kindOf(foro), 'FORO');
+  assert.equal(kindOf(ev({ category: 'ENTREGA', type_label: 'TRABAJO' })), 'ENTREGA');
+  assert.equal(kindOf(ev({})), 'SESION');
+  assert.equal(kindName(foro), 'Foro');
+  assert.equal(deliveryStatus(foro, now, keyToMs('2026-10-07T10:00')).status, 'pronto');
+  assert.deepEqual(upcoming([foro], now).map((e) => e.event_id), ['f']);
+  assert.equal(upcoming([foro], { date: '2026-10-08', time: '00:00' }).length, 0, 'vencido a las 11:59 PM');
 });

@@ -6,6 +6,7 @@
   --accent: #eff422; --accent-soft: rgba(239, 244, 34, 0.14); --accent-ink: #161603;
   --ses: #7fa8f2; --ses-soft: rgba(127, 168, 242, 0.16); --ses-ink: #0d1424;
   --ent: #f2a65a; --ent-soft: rgba(242, 166, 90, 0.16);
+  --foro: #c49bf5; --foro-soft: rgba(196, 155, 245, 0.16); --foro-ink: #1b0f2b;
   --green: #7fcf9e; --green-soft: rgba(127, 207, 158, 0.14);
   --red: #e88a86; --red-soft: rgba(232, 138, 134, 0.14); --red-ink: #1a0b0a;
   --weekend: #171717; --overlay: rgba(6, 6, 8, 0.62);
@@ -20,6 +21,7 @@
     --accent: #d8c400; --accent-soft: rgba(216, 196, 0, 0.16); --accent-ink: #1c1a0d;
     --ses: #3f6fc2; --ses-soft: rgba(63, 111, 194, 0.12); --ses-ink: #ffffff;
     --ent: #c46a14; --ent-soft: rgba(196, 106, 20, 0.12);
+    --foro: #7d4fc4; --foro-soft: rgba(125, 79, 196, 0.12); --foro-ink: #ffffff;
     --green: #3f9d68; --green-soft: rgba(63, 157, 104, 0.12);
     --red: #d6564f; --red-soft: rgba(214, 86, 79, 0.12); --red-ink: #ffffff;
     --weekend: #f6f4ec; --overlay: rgba(30, 28, 20, 0.4);
@@ -33,6 +35,7 @@
   --accent: #d8c400; --accent-soft: rgba(216, 196, 0, 0.16); --accent-ink: #1c1a0d;
   --ses: #3f6fc2; --ses-soft: rgba(63, 111, 194, 0.12); --ses-ink: #ffffff;
   --ent: #c46a14; --ent-soft: rgba(196, 106, 20, 0.12);
+  --foro: #7d4fc4; --foro-soft: rgba(125, 79, 196, 0.12); --foro-ink: #ffffff;
   --green: #3f9d68; --green-soft: rgba(63, 157, 104, 0.12);
   --red: #d6564f; --red-soft: rgba(214, 86, 79, 0.12); --red-ink: #ffffff;
   --weekend: #f6f4ec; --overlay: rgba(30, 28, 20, 0.4);
@@ -69,6 +72,8 @@ a { color: inherit; }
 .btn-primary:hover { background: var(--accent); filter: brightness(1.08); }
 .btn-ses { background: var(--ses); color: var(--ses-ink); border-color: var(--ses); }
 .btn-ses:hover { background: var(--ses); filter: brightness(1.08); }
+.btn-foro { background: var(--foro); color: var(--foro-ink); border-color: var(--foro); }
+.btn-foro:hover { background: var(--foro); filter: brightness(1.08); }
 .btn-danger { background: var(--red); color: var(--red-ink); border-color: var(--red); }
 .btn-danger:hover { background: var(--red); filter: brightness(1.05); }
 .btn-ghost { background: transparent; border-color: transparent; color: var(--text-dim); }
@@ -112,6 +117,8 @@ a { color: inherit; }
 .ev.SESION svg { color: var(--ses); }
 .ev.ENTREGA { background: var(--ent-soft); }
 .ev.ENTREGA svg { color: var(--ent); }
+.ev.FORO { background: var(--foro-soft); }
+.ev.FORO svg { color: var(--foro); }
 .ev.past { opacity: 0.55; }
 .ev.past .n { text-decoration: line-through; text-decoration-color: var(--text-faint); }
 .ev:hover { filter: brightness(1.15); }
@@ -121,6 +128,7 @@ a { color: inherit; }
 .dots i { width: 6px; height: 6px; border-radius: 50%; }
 .dots i.SESION { background: var(--ses); }
 .dots i.ENTREGA { background: var(--ent); }
+.dots i.FORO { background: var(--foro); }
 @media (max-width: 640px) {
   .weekdays .long { display: none; }
   .weekdays .short { display: block; }
@@ -158,10 +166,12 @@ a { color: inherit; }
 .up-ico svg { width: 17px; height: 17px; }
 .SESION .up-ico { background: var(--ses-soft); color: var(--ses); }
 .ENTREGA .up-ico { background: var(--ent-soft); color: var(--ent); }
+.FORO .up-ico { background: var(--foro-soft); color: var(--foro); }
 .up-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .up-kind { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
 .SESION .up-kind { color: var(--ses); }
 .ENTREGA .up-kind { color: var(--ent); }
+.FORO .up-kind { color: var(--foro); }
 .up-title { font-size: 14px; font-weight: 700; line-height: 1.25; }
 .up-when { font-size: 12px; color: var(--text-dim); }
 .up-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
@@ -290,6 +300,7 @@ table.sheet { width: 100%; min-width: 1120px; border-collapse: separate; border-
 .sheet thead th.rn { left: 0; z-index: 3; text-align: center; }
 .sheet tr.t-SESION td.rn { border-left-color: var(--ses); }
 .sheet tr.t-ENTREGA td.rn { border-left-color: var(--ent); }
+.sheet tr.t-FORO td.rn { border-left-color: var(--foro); }
 .sheet input, .sheet select { display: block; width: 100%; min-width: 0; background: transparent; border: none; color: var(--text); font: inherit; font-size: 12.5px; padding: 9px 8px; outline: none; }
 .sheet select { cursor: pointer; font-weight: 600; }
 .sheet select option { background: var(--surface); color: var(--text); }

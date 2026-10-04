@@ -65,9 +65,9 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
     const typeText = stripAccents(cellToText(cells.TIPO)).toUpperCase();
     let type: TypeLabel | null = null;
     if (!typeText) {
-      err(row, 'TIPO', cells.TIPO, 'Falta el tipo de evento.', 'Elige CLASE, SESION, TRABAJO o ENTREGA en la lista desplegable.');
+      err(row, 'TIPO', cells.TIPO, 'Falta el tipo de evento.', 'Elige CLASE, SESION, TRABAJO, ENTREGA o FORO en la lista desplegable.');
     } else if (!(TYPE_LABELS as readonly string[]).includes(typeText)) {
-      err(row, 'TIPO', cells.TIPO, 'Tipo no reconocido.', 'Elige CLASE, SESION, TRABAJO o ENTREGA en la lista desplegable.');
+      err(row, 'TIPO', cells.TIPO, 'Tipo no reconocido.', 'Elige CLASE, SESION, TRABAJO, ENTREGA o FORO en la lista desplegable.');
     } else {
       type = typeText as TypeLabel;
     }
@@ -137,10 +137,10 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
       warn(row, 'FECHA', cells.FECHA, `«${title}» tiene fecha pasada (${formatDateShort(date)}). Se mostrará como finalizada o vencida.`);
     }
 
-    // Duplicados: mismo tipo (clase/sesión o trabajo/entrega), nombre, fecha y hora → error, no se guarda.
+    // Duplicados: mismo tipo (clase/sesión, trabajo/entrega o foro), nombre, fecha y hora → error, no se guarda.
     // El nombre se compara sin mayúsculas, tildes ni espacios repetidos.
     const signature = [
-      isSession ? 'SESION' : 'ENTREGA',
+      isSession ? 'SESION' : type === 'FORO' ? 'FORO' : 'ENTREGA',
       stripAccents(title).toLowerCase(),
       date,
       start ?? (isSession ? '' : 'sin hora')
@@ -149,7 +149,7 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
     if (firstRow !== undefined) {
       err(
         row, 'NOMBRE', title,
-        `Evento duplicado: la fila ${firstRow} ya tiene ${isSession ? 'una clase o sesión' : 'un trabajo o entrega'} «${title}» el ${formatDateShort(date)}${start ? ` a las ${start}` : ' sin hora'}.`,
+        `Evento duplicado: la fila ${firstRow} ya tiene ${isSession ? 'una clase o sesión' : type === 'FORO' ? 'un foro' : 'un trabajo o entrega'} «${title}» el ${formatDateShort(date)}${start ? ` a las ${start}` : ' sin hora'}.`,
         'Elimina una de las dos filas. Si son eventos distintos, cambia el nombre o la hora.'
       );
       continue;

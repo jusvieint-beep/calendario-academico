@@ -31,7 +31,7 @@ create table if not exists public.events (
   id           uuid primary key default gen_random_uuid(),
   event_id     text not null unique,
   category     text not null check (category in ('SESION', 'ENTREGA')),
-  type_label   text not null check (type_label in ('CLASE', 'SESION', 'TRABAJO', 'ENTREGA')),
+  type_label   text not null check (type_label in ('CLASE', 'SESION', 'TRABAJO', 'ENTREGA', 'FORO')),
   title        text not null check (char_length(title) between 1 and 150),
   event_date   date not null,
   start_time   time,
@@ -47,8 +47,19 @@ create table if not exists public.events (
   constraint events_end_after_start check (end_time is null or start_time is null or end_time > start_time),
   constraint events_category_matches_label check (
     (category = 'SESION'  and type_label in ('CLASE', 'SESION')) or
-    (category = 'ENTREGA' and type_label in ('TRABAJO', 'ENTREGA'))
+    (category = 'ENTREGA' and type_label in ('TRABAJO', 'ENTREGA', 'FORO'))
   )
+);
+
+-- FORO (participación con fecha límite): se guarda como categoría ENTREGA.
+-- Se repite con ALTER para que ejecutar este archivo de nuevo actualice una base ya creada.
+alter table public.events drop constraint if exists events_type_label_check;
+alter table public.events add constraint events_type_label_check
+  check (type_label in ('CLASE', 'SESION', 'TRABAJO', 'ENTREGA', 'FORO'));
+alter table public.events drop constraint if exists events_category_matches_label;
+alter table public.events add constraint events_category_matches_label check (
+  (category = 'SESION'  and type_label in ('CLASE', 'SESION')) or
+  (category = 'ENTREGA' and type_label in ('TRABAJO', 'ENTREGA', 'FORO'))
 );
 create index if not exists events_sort_at_idx on public.events (sort_at);
 create index if not exists events_event_date_idx on public.events (event_date);
