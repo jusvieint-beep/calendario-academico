@@ -31,7 +31,7 @@ create table if not exists public.events (
   id           uuid primary key default gen_random_uuid(),
   event_id     text not null unique,
   category     text not null check (category in ('SESION', 'ENTREGA')),
-  type_label   text not null check (type_label in ('CLASE', 'SESION', 'TRABAJO', 'ENTREGA', 'FORO')),
+  type_label   text not null check (type_label in ('CLASE', 'SESION', 'TRABAJO', 'CUESTIONARIO', 'FORO')),
   title        text not null check (char_length(title) between 1 and 150),
   event_date   date not null,
   start_time   time,
@@ -47,20 +47,10 @@ create table if not exists public.events (
   constraint events_end_after_start check (end_time is null or start_time is null or end_time > start_time),
   constraint events_category_matches_label check (
     (category = 'SESION'  and type_label in ('CLASE', 'SESION')) or
-    (category = 'ENTREGA' and type_label in ('TRABAJO', 'ENTREGA', 'FORO'))
+    (category = 'ENTREGA' and type_label in ('TRABAJO', 'CUESTIONARIO', 'FORO'))
   )
 );
 
--- FORO (participación con fecha límite): se guarda como categoría ENTREGA.
--- Se repite con ALTER para que ejecutar este archivo de nuevo actualice una base ya creada.
-alter table public.events drop constraint if exists events_type_label_check;
-alter table public.events add constraint events_type_label_check
-  check (type_label in ('CLASE', 'SESION', 'TRABAJO', 'ENTREGA', 'FORO'));
-alter table public.events drop constraint if exists events_category_matches_label;
-alter table public.events add constraint events_category_matches_label check (
-  (category = 'SESION'  and type_label in ('CLASE', 'SESION')) or
-  (category = 'ENTREGA' and type_label in ('TRABAJO', 'ENTREGA', 'FORO'))
-);
 create index if not exists events_sort_at_idx on public.events (sort_at);
 create index if not exists events_event_date_idx on public.events (event_date);
 comment on column public.events.source is 'excel = gestionado por importación. La sincronización solo borra filas con source = excel.';
@@ -216,7 +206,9 @@ begin
   select
     x.ord::int                                                   as rn,
     nullif(upper(btrim(x.r->>'event_id')), '')                   as event_id,
-    upper(btrim(x.r->>'type_label'))                             as type_label,
+    -- ENTREGA es el nombre antiguo de CUESTIONARIO (Excel o respaldos viejos).
+    case when upper(btrim(x.r->>'type_label')) = 'ENTREGA' then 'CUESTIONARIO'
+         else upper(btrim(x.r->>'type_label')) end            as type_label,
     case when upper(btrim(x.r->>'type_label')) in ('CLASE', 'SESION') then 'SESION' else 'ENTREGA' end as category,
     btrim(x.r->>'title')                                         as title,
     (x.r->>'event_date')::date                                   as event_date,
@@ -545,3 +537,24 @@ create policy "Admins leen Excel" on storage.objects
 drop policy if exists "Admins borran Excel" on storage.objects;
 create policy "Admins borran Excel" on storage.objects
   for delete to authenticated using (bucket_id = 'imports' and public.is_admin());
+
+-- ---------------------------------------------------------------------------
+-- 5. Actualizaciones para una base ya creada (se puede ejecutar de nuevo)
+--    Tipos: CLASE, SESION (sesiones) · TRABAJO, CUESTIONARIO, FORO (con fecha límite).
+--    ENTREGA pasó a llamarse CUESTIONARIO: se convierten los eventos existentes.
+-- ---------------------------------------------------------------------------
+alter table public.events drop constraint if exists events_type_label_check;
+alter table public.events drop constraint if exists events_category_matches_label;
+
+update public.events
+   set type_label   = 'CUESTIONARIO',
+       content_hash = public.event_hash(category, 'CUESTIONARIO', title, event_date, start_time, end_time, link, description),
+       updated_at   = now()
+ where type_label = 'ENTREGA';
+
+alter table public.events add constraint events_type_label_check
+  check (type_label in ('CLASE', 'SESION', 'TRABAJO', 'CUESTIONARIO', 'FORO'));
+alter table public.events add constraint events_category_matches_label check (
+  (category = 'SESION'  and type_label in ('CLASE', 'SESION')) or
+  (category = 'ENTREGA' and type_label in ('TRABAJO', 'CUESTIONARIO', 'FORO'))
+);

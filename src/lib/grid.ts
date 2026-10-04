@@ -8,7 +8,7 @@
 import { COLUMNS, normalizeHeader, type ColumnKey } from './excel/columns';
 import { parseDateCell, parseTimeCell } from './excel/normalize';
 import { addDays, formatDateShort } from './dates';
-import { TYPE_LABELS, type CalendarEvent, type TypeLabel } from './types';
+import { TYPE_ALIASES, TYPE_LABELS, type CalendarEvent, type TypeLabel } from './types';
 
 export type GridCells = Record<ColumnKey, string>;
 
@@ -37,9 +37,10 @@ export const sameCells = (a: GridCells, b: GridCells) => COLUMN_KEYS.every((k) =
 
 const stripAccents = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '');
 
-/** 'clase', 'Sesión' → 'CLASE', 'SESION'. Si no es un tipo conocido, devuelve el texto tal cual. */
+/** 'clase', 'Sesión', 'Entrega' → 'CLASE', 'SESION', 'CUESTIONARIO'. Si no es un tipo conocido, devuelve el texto tal cual. */
 export function normalizeType(value: string): string {
   const t = stripAccents(value).trim().toUpperCase();
+  if (TYPE_ALIASES[t]) return TYPE_ALIASES[t];
   return (TYPE_LABELS as readonly string[]).includes(t) ? (t as TypeLabel) : value.trim();
 }
 

@@ -46,7 +46,7 @@ export default function AdminDashboard({ adminName, events, imports, version, se
           <span className="stat-sub">Desde hoy · {events.filter((e) => e.category === 'SESION').length} en total</span>
         </div>
         <div className="stat">
-          <span className="stat-label"><i style={{ background: 'var(--ent)' }} />Trabajos y foros pendientes</span>
+          <span className="stat-label"><i style={{ background: 'var(--ent)' }} />Trabajos, cuestionarios y foros</span>
           <span className="stat-num">{future.filter((e) => e.category === 'ENTREGA').length}</span>
           <span className="stat-sub">Sin vencer · {events.filter((e) => e.category === 'ENTREGA').length} en total</span>
         </div>
@@ -56,9 +56,9 @@ export default function AdminDashboard({ adminName, events, imports, version, se
           <span className="stat-sub">{nextSession ? whenText(nextSession) : 'No hay clases próximas'}</span>
         </div>
         <div className="stat">
-          <span className="stat-label">Próximo trabajo</span>
+          <span className="stat-label">Próxima fecha límite</span>
           <span className="stat-txt">{nextDelivery?.title ?? '—'}</span>
-          <span className="stat-sub">{nextDelivery ? whenText(nextDelivery) : 'No hay entregas próximas'}</span>
+          <span className="stat-sub">{nextDelivery ? whenText(nextDelivery) : 'No hay fechas límite próximas'}</span>
         </div>
         <div className="stat">
           <span className="stat-label">Última actualización</span>

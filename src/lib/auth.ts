@@ -40,6 +40,6 @@ export function friendlyDbError(raw: string | undefined): string {
   if (msg.includes('EMPTY_IMPORT')) return 'El archivo no tiene eventos. Por seguridad no se permite dejar el calendario vacío.';
   if (msg.includes('DUPLICATE_ID')) return `Hay un ID_EVENTO repetido (${msg.split('DUPLICATE_ID:')[1]?.trim() ?? ''}). Corrígelo y vuelve a cargar el archivo.`;
   if (msg.includes('SNAPSHOT_NOT_FOUND')) return 'Ese respaldo ya no existe. Solo se conservan los últimos 30.';
-  if (msg.includes('INVALID_TYPE')) return 'Hay un TIPO no válido. Usa CLASE, SESION, TRABAJO, ENTREGA o FORO.';
+  if (msg.includes('INVALID_TYPE')) return 'Hay un TIPO no válido. Usa CLASE, SESION, TRABAJO, CUESTIONARIO o FORO.';
   return `No se aplicó ningún cambio. El calendario sigue igual. Detalle técnico: ${msg || 'error desconocido'}`;
 }

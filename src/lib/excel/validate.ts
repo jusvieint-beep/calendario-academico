@@ -1,4 +1,4 @@
-import { TYPE_LABELS, type ImportRow, type RowIssue, type TypeLabel } from '../types';
+import { TYPE_ALIASES, TYPE_LABELS, type ImportRow, type RowIssue, type TypeLabel } from '../types';
 import { formatDateShort } from '../dates';
 import { MAX_ROWS, type ColumnKey } from './columns';
 import { cellToLink, cellToText, displayValue, isEmptyCell, parseDateCell, parseTimeCell } from './normalize';
@@ -61,15 +61,19 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
       }
     }
 
-    // TIPO
-    const typeText = stripAccents(cellToText(cells.TIPO)).toUpperCase();
+    // TIPO (los nombres antiguos, como ENTREGA, se aceptan y se guardan con el nombre nuevo)
+    const rawType = stripAccents(cellToText(cells.TIPO)).toUpperCase();
+    const typeText = TYPE_ALIASES[rawType] ?? rawType;
     let type: TypeLabel | null = null;
     if (!typeText) {
-      err(row, 'TIPO', cells.TIPO, 'Falta el tipo de evento.', 'Elige CLASE, SESION, TRABAJO, ENTREGA o FORO en la lista desplegable.');
+      err(row, 'TIPO', cells.TIPO, 'Falta el tipo de evento.', 'Elige CLASE, SESION, TRABAJO, CUESTIONARIO o FORO en la lista desplegable.');
     } else if (!(TYPE_LABELS as readonly string[]).includes(typeText)) {
-      err(row, 'TIPO', cells.TIPO, 'Tipo no reconocido.', 'Elige CLASE, SESION, TRABAJO, ENTREGA o FORO en la lista desplegable.');
+      err(row, 'TIPO', cells.TIPO, 'Tipo no reconocido.', 'Elige CLASE, SESION, TRABAJO, CUESTIONARIO o FORO en la lista desplegable.');
     } else {
       type = typeText as TypeLabel;
+      if (rawType !== typeText) {
+        warn(row, 'TIPO', cells.TIPO, `El tipo «${rawType}» ahora se llama ${type}. Se guardará como ${type}.`, `Escribe ${type} en la columna TIPO.`);
+      }
     }
     const isSession = type === 'CLASE' || type === 'SESION';
 
@@ -103,7 +107,7 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
       err(row, 'HORA_INICIO', cells.HORA_INICIO, 'Las clases y sesiones necesitan hora de inicio.', 'Escribe la hora de inicio, por ejemplo 08:00.');
     }
     if (type && !isSession && end) {
-      warn(row, 'HORA_FIN', cells.HORA_FIN, 'Los trabajos y entregas no usan hora de fin; se ignorará.', 'Si quieres una hora límite, escríbela en HORA_INICIO.');
+      warn(row, 'HORA_FIN', cells.HORA_FIN, 'Los trabajos, cuestionarios y foros no usan hora de fin; se ignorará.', 'Si quieres una hora límite, escríbela en HORA_INICIO.');
       end = null;
     }
     if (isSession && start && end && end <= start) {
@@ -137,10 +141,10 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
       warn(row, 'FECHA', cells.FECHA, `«${title}» tiene fecha pasada (${formatDateShort(date)}). Se mostrará como finalizada o vencida.`);
     }
 
-    // Duplicados: mismo tipo (clase/sesión, trabajo/entrega o foro), nombre, fecha y hora → error, no se guarda.
+    // Duplicados: mismo tipo (clase/sesión, trabajo, cuestionario o foro), nombre, fecha y hora → error, no se guarda.
     // El nombre se compara sin mayúsculas, tildes ni espacios repetidos.
     const signature = [
-      isSession ? 'SESION' : type === 'FORO' ? 'FORO' : 'ENTREGA',
+      isSession ? 'SESION' : type === 'FORO' || type === 'CUESTIONARIO' ? type : 'TRABAJO',
       stripAccents(title).toLowerCase(),
       date,
       start ?? (isSession ? '' : 'sin hora')
@@ -149,7 +153,7 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
     if (firstRow !== undefined) {
       err(
         row, 'NOMBRE', title,
-        `Evento duplicado: la fila ${firstRow} ya tiene ${isSession ? 'una clase o sesión' : type === 'FORO' ? 'un foro' : 'un trabajo o entrega'} «${title}» el ${formatDateShort(date)}${start ? ` a las ${start}` : ' sin hora'}.`,
+        `Evento duplicado: la fila ${firstRow} ya tiene ${isSession ? 'una clase o sesión' : type === 'FORO' ? 'un foro' : type === 'CUESTIONARIO' ? 'un cuestionario' : 'un trabajo'} «${title}» el ${formatDateShort(date)}${start ? ` a las ${start}` : ' sin hora'}.`,
         'Elimina una de las dos filas. Si son eventos distintos, cambia el nombre o la hora.'
       );
       continue;

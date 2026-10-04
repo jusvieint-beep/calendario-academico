@@ -44,13 +44,16 @@ export function kindName(e: Pick<CalendarEvent, 'type_label'>): string {
     case 'SESION': return 'Sesión';
     case 'TRABAJO': return 'Trabajo';
     case 'FORO': return 'Foro';
-    default: return 'Entrega';
+    case 'CUESTIONARIO': return 'Cuestionario';
+    default: return (e.type_label as string) === 'ENTREGA' ? 'Cuestionario' : 'Trabajo';
   }
 }
 
-/** Foro → 'FORO'; el resto según su categoría. */
+/** Foro → 'FORO'; Cuestionario → 'CUESTIONARIO'; el resto según su categoría ('ENTREGA' = trabajo). */
 export const kindOf = (e: Pick<CalendarEvent, 'category' | 'type_label'>): Kind =>
-  e.type_label === 'FORO' ? 'FORO' : e.category;
+  e.type_label === 'FORO' ? 'FORO'
+  : e.type_label === 'CUESTIONARIO' || (e.type_label as string) === 'ENTREGA' ? 'CUESTIONARIO'
+  : e.category;
 
 export type DeliveryStatus = 'pendiente' | 'pronto' | 'vencido';
 

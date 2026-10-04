@@ -37,10 +37,10 @@ Para la **primera carga**, deja ID_EVENTO vacío en todas las filas: la app asig
 | Columna | Obligatoria | Formato | Ejemplo |
 |---|---|---|---|
 | ID_EVENTO | No | Texto único. Vacío en filas nuevas: la app asigna `EVT-0001`… | EVT-0001 |
-| TIPO | Sí | CLASE, SESION, TRABAJO, ENTREGA o FORO | CLASE |
+| TIPO | Sí | CLASE, SESION, TRABAJO, CUESTIONARIO o FORO | CLASE |
 | NOMBRE | Sí | Texto, máx. 150 caracteres | Matemáticas II |
 | FECHA | Sí | dd/mm/aaaa | 05/10/2026 |
-| HORA_INICIO | Solo clases y sesiones | hh:mm en 24 h. En trabajos, entregas y foros es la hora límite; vacía = 11:59 PM | 08:00 |
+| HORA_INICIO | Solo clases y sesiones | hh:mm en 24 h. En trabajos, cuestionarios y foros es la hora límite; vacía = 11:59 PM | 08:00 |
 | HORA_FIN | No | hh:mm, posterior al inicio | 10:00 |
 | LINK | No | Empieza por https:// | https://meet.google.com/… |
 | DESCRIPCION | No | Texto, máx. 2.000 caracteres | Traer calculadora |
@@ -248,9 +248,9 @@ Fechas y horas se guardan tal como vienen del Excel, en hora local de Colombia (
 
 - Trabajo sin hora: vence a las 11:59 PM. Clase o sesión: hora de inicio obligatoria.
 - ID_EVENTO vacío: se asigna automáticamente.
-- Tipos: CLASE y SESION son sesiones (azul); TRABAJO y ENTREGA son entregas (naranja); FORO es una participación con fecha límite (violeta): se comporta como una entrega (hora límite, sin hora = 11:59 PM, estados Pendiente / Vence pronto / Vencido), tiene enlace opcional con botón «Ir al foro» y su propio filtro. Se conserva la etiqueta escrita.
+- Tipos: CLASE y SESION son sesiones (azul, con hora de inicio). TRABAJO (naranja), CUESTIONARIO (verde, ícono de examen) y FORO (violeta) tienen fecha límite: la hora es la hora límite y sin hora vencen a las 11:59 PM, con estados Pendiente / Vence pronto / Vencido. Cuestionarios y foros pueden tener enlace, con botón «Presentar cuestionario» o «Ir al foro». Cada tipo tiene su filtro. ENTREGA es el nombre antiguo de CUESTIONARIO: se sigue aceptando en Excel y respaldos viejos y se guarda como CUESTIONARIO.
 - Sesión sin enlace: advertencia, no error.
-- Duplicados: si dos filas tienen el mismo tipo (clase/sesión, trabajo/entrega o foro), nombre, fecha y hora, es un error y no se guarda. El nombre se compara sin mayúsculas, tildes ni espacios repetidos. Aplica al editor web y al Excel.
+- Duplicados: si dos filas tienen el mismo tipo (clase/sesión, trabajo, cuestionario o foro), nombre, fecha y hora, es un error y no se guarda. El nombre se compara sin mayúsculas, tildes ni espacios repetidos. Aplica al editor web y al Excel.
 - Clase en curso: visible en «Próximas actividades» hasta su hora de fin (o 1 hora después del inicio si no tiene fin).
 - Próximo a vencer: menos de 48 horas.
 - El calendario es un componente propio que reproduce el diseño aprobado, en lugar de FullCalendar: menos dependencias y control total del diseño.

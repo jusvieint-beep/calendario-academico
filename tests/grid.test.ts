@@ -56,12 +56,13 @@ test('pegar dentro de la tabla: escribe desde la celda elegida, agrega filas y p
     cells({})
   ];
   const isNew = (i: number) => i === 1;
-  const res = applyPaste(base, 0, 0, [['EVT-X', 'trabajo', 'B'], ['EVT-Y', 'ENTREGA', 'C'], ['', 'CLASE', 'D']], isNew);
+  const res = applyPaste(base, 0, 0, [['EVT-X', 'trabajo', 'B'], ['EVT-Y', 'Entrega', 'C'], ['', 'CLASE', 'D']], isNew);
   assert.equal(res.added, 1);
   assert.equal(res.touched, 3);
   assert.equal(res.rows[0].ID_EVENTO, 'EVT-0001', 'el ID publicado no se sobrescribe');
   assert.equal(res.rows[0].TIPO, 'TRABAJO');
   assert.equal(res.rows[1].ID_EVENTO, 'EVT-Y', 'en filas nuevas sí se puede pegar ID');
+  assert.equal(res.rows[1].TIPO, 'CUESTIONARIO', 'el nombre antiguo ENTREGA se convierte al pegar');
   assert.equal(res.rows[2].NOMBRE, 'D');
   assert.equal(base[0].TIPO, 'CLASE', 'no modifica la tabla original');
   assert.deepEqual(dropHeaderRow([['ID_EVENTO', 'TIPO', 'NOMBRE'], ['', 'CLASE', 'X']]), [['', 'CLASE', 'X']]);

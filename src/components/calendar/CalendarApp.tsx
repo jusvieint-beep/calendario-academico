@@ -11,7 +11,7 @@ import { compareEvents, deliveryStatus, isLive, isPast, kindName, upcoming, when
 import { CategoryIcon } from '../Icons';
 import Modal from '../Modal';
 
-type Filter = 'all' | 'SESION' | 'ENTREGA' | 'FORO';
+type Filter = 'all' | 'SESION' | 'ENTREGA' | 'CUESTIONARIO' | 'FORO';
 type View = 'month' | 'agenda';
 
 interface Props {
@@ -60,6 +60,7 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
     all: inMonth.length,
     SESION: inMonth.filter((e) => kindOf(e) === 'SESION').length,
     ENTREGA: inMonth.filter((e) => kindOf(e) === 'ENTREGA').length,
+    CUESTIONARIO: inMonth.filter((e) => kindOf(e) === 'CUESTIONARIO').length,
     FORO: inMonth.filter((e) => kindOf(e) === 'FORO').length
   };
   const next5 = useMemo(() => upcoming(sorted, now), [sorted, now]);
@@ -171,12 +172,20 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
     return <span className={`badge ${cls}`}>{s.label}</span>;
   };
 
+  /** Botón del enlace: sesión → «Ingresar a la sesión», foro → «Ir al foro», cuestionario → «Presentar cuestionario». */
+  const JOIN: Partial<Record<string, { cls: string; label: string }>> = {
+    SESION: { cls: 'btn-ses', label: 'Ingresar a la sesión' },
+    FORO: { cls: 'btn-foro', label: 'Ir al foro' },
+    CUESTIONARIO: { cls: 'btn-quiz', label: 'Presentar cuestionario' }
+  };
+  const hasJoin = (e: CalendarEvent) => Boolean(JOIN[kindOf(e)]);
   const joinButton = (e: CalendarEvent, small = false) => {
-    if (!e.link) return null;
-    const foro = kindOf(e) === 'FORO';
+    const k = kindOf(e);
+    const j = JOIN[k];
+    if (!e.link || !j) return null;
     return (
-      <a className={`btn ${foro ? 'btn-foro' : 'btn-ses'}${small ? ' btn-sm' : ''}`} href={e.link} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()}>
-        {!small && <CategoryIcon category={foro ? 'FORO' : 'SESION'} />}{foro ? 'Ir al foro' : 'Ingresar a la sesión'}
+      <a className={`btn ${j.cls}${small ? ' btn-sm' : ''}`} href={e.link} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()}>
+        {!small && <CategoryIcon category={k} />}{j.label}
       </a>
     );
   };
@@ -184,7 +193,8 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
   const filters: [Filter, string, string, string][] = [
     ['all', 'Todas', 'var(--accent)', 'var(--accent-soft)'],
     ['SESION', 'Clases y sesiones', 'var(--ses)', 'var(--ses-soft)'],
-    ['ENTREGA', 'Trabajos y entregas', 'var(--ent)', 'var(--ent-soft)'],
+    ['ENTREGA', 'Trabajos', 'var(--ent)', 'var(--ent-soft)'],
+    ['CUESTIONARIO', 'Cuestionarios', 'var(--quiz)', 'var(--quiz-soft)'],
     ['FORO', 'Foros', 'var(--foro)', 'var(--foro-soft)']
   ];
 
@@ -232,7 +242,7 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
           <div className="up-list">
             {next5.length ? next5.map((e) => {
               const badge = e.category === 'ENTREGA' || isLive(e, now) ? statusBadge(e) : null;
-              const join = e.category === 'SESION' || kindOf(e) === 'FORO' ? joinButton(e, true) : null;
+              const join = hasJoin(e) ? joinButton(e, true) : null;
               return (
                 <div
                   key={e.event_id}
@@ -257,7 +267,8 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
           </div>
           <div className="legend">
             <span><i style={{ background: 'var(--ses)' }} />Clase / sesión</span>
-            <span><i style={{ background: 'var(--ent)' }} />Trabajo / entrega</span>
+            <span><i style={{ background: 'var(--ent)' }} />Trabajo</span>
+            <span><i style={{ background: 'var(--quiz)' }} />Cuestionario</span>
             <span><i style={{ background: 'var(--foro)' }} />Foro</span>
           </div>
         </aside>
@@ -305,18 +316,18 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
             </>
           ) : (
             <dl className="kv">
-              <dt>{kindOf(detail) === 'FORO' ? 'Fecha límite' : 'Fecha de entrega'}</dt><dd>{capitalize(formatDate(detail.event_date, true, true))}</dd>
+              <dt>{kindOf(detail) === 'ENTREGA' ? 'Fecha de entrega' : 'Fecha límite'}</dt><dd>{capitalize(formatDate(detail.event_date, true, true))}</dd>
               <dt>Hora límite</dt><dd className="num">{detail.start_time ? formatTime(detail.start_time) : 'Sin hora límite (vence al final del día)'}</dd>
               <dt>Tipo</dt><dd>{kindName(detail)}</dd>
               <dt>Estado</dt><dd>{statusBadge(detail)}</dd>
               {detail.description && (<><dt>Descripción</dt><dd>{detail.description}</dd></>)}
-              {detail.link && kindOf(detail) !== 'FORO' && (<><dt>Enlace</dt><dd><a href={detail.link} target="_blank" rel="noopener noreferrer">{detail.link}</a></dd></>)}
+              {detail.link && !hasJoin(detail) && (<><dt>Enlace</dt><dd><a href={detail.link} target="_blank" rel="noopener noreferrer">{detail.link}</a></dd></>)}
             </dl>
           )}
           <div className="modal-actions">
             <button className="btn" type="button" onClick={() => setDetail(null)}>Cerrar</button>
             {detail.category === 'SESION' && (joinButton(detail) ?? <button className="btn" type="button" disabled>Sin enlace disponible</button>)}
-            {kindOf(detail) === 'FORO' && joinButton(detail)}
+            {detail.category !== 'SESION' && joinButton(detail)}
           </div>
         </Modal>
       )}
