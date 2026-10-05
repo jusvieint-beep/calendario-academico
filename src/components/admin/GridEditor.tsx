@@ -51,6 +51,11 @@ const MAX_LISTED_ERRORS = 15;
 
 /** En trabajos, cuestionarios y foros, la hora vacía significa 11:59 PM y la hora de fin no aplica. */
 function placeholderFor(key: ColumnKey, category: string): string | undefined {
+  if (category === 'GRABACION') {
+    if (key === 'HORA_INICIO') return 'Opcional';
+    if (key === 'HORA_FIN') return 'No aplica';
+    if (key === 'LINK') return 'https://… (enlace a la grabación)';
+  }
   if (category === 'ENTREGA' || category === 'FORO' || category === 'CUESTIONARIO') {
     if (key === 'HORA_INICIO') return '23:59';
     if (key === 'HORA_FIN') return 'No aplica';
@@ -71,7 +76,7 @@ function rowsFromEvents(events: CalendarEvent[]): Row[] {
 }
 
 const categoryOf = (type: string) =>
-  type === 'CLASE' || type === 'SESION' ? 'SESION' : type === 'FORO' ? 'FORO' : type === 'CUESTIONARIO' ? 'CUESTIONARIO' : type === 'TRABAJO' ? 'ENTREGA' : '';
+  type === 'SESION' ? 'SESION' : type === 'GRABACION' ? 'GRABACION' : type === 'FORO' ? 'FORO' : type === 'CUESTIONARIO' ? 'CUESTIONARIO' : type === 'TRABAJO' ? 'ENTREGA' : '';
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
@@ -679,7 +684,7 @@ export default function GridEditor({ events, today }: { events: CalendarEvent[];
             className="paste-area"
             value={pasteText}
             onChange={(e) => setPasteText(e.target.value)}
-            placeholder={'CLASE\tMatemáticas II\t05/10/2026\t08:00\t10:00\thttps://meet.google.com/abc\tUnidad 3'}
+            placeholder={'SESION\tMatemáticas II\t05/10/2026\t08:00\t10:00\thttps://meet.google.com/abc\tUnidad 3'}
           />
           {pasteText.trim() !== '' && (
             <div className="stat-sub">

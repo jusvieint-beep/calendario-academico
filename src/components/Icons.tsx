@@ -38,13 +38,19 @@ export const ForumIcon = (p: P) => (
   <svg {...base} {...p}><path d="M14.5 4.5h-10a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2H6v3l3.5-3h5a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2z" /><path d="M16.5 8.5h3a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H18v2.5l-3-2.5h-3.5a2 2 0 0 1-1.6-.8" /></svg>
 );
 
+/** Grabación: pantalla con botón de reproducir. */
+export const RecordingIcon = (p: P) => (
+  <svg {...base} {...p}><rect x="2.5" y="4.5" width="19" height="13" rx="2.5" /><path d="M10 8.3v5.4l4.6-2.7z" /><path d="M8 21h8" /></svg>
+);
+
 /** Cuestionario: hoja de examen con respuestas marcadas. */
 export const QuizIcon = (p: P) => (
   <svg {...base} {...p}><rect x="5" y="3.5" width="14" height="18" rx="2.5" /><path d="M9.5 2.5h5v2.5h-5z" /><path d="M8.5 10l1.2 1.2 2.1-2.4" /><path d="M14 10h2" /><path d="M8.5 15.5l1.2 1.2 2.1-2.4" /><path d="M14 15.5h2" /></svg>
 );
 
-export const CategoryIcon = ({ category, ...p }: P & { category: 'SESION' | 'ENTREGA' | 'CUESTIONARIO' | 'FORO' }) =>
+export const CategoryIcon = ({ category, ...p }: P & { category: 'SESION' | 'GRABACION' | 'ENTREGA' | 'CUESTIONARIO' | 'FORO' }) =>
   category === 'SESION' ? <SessionIcon {...p} />
+  : category === 'GRABACION' ? <RecordingIcon {...p} />
   : category === 'FORO' ? <ForumIcon {...p} />
   : category === 'CUESTIONARIO' ? <QuizIcon {...p} />
   : <DeliveryIcon {...p} />;

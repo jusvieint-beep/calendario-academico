@@ -8,6 +8,7 @@
   --ent: #f2a65a; --ent-soft: rgba(242, 166, 90, 0.16);
   --foro: #c49bf5; --foro-soft: rgba(196, 155, 245, 0.16); --foro-ink: #1b0f2b;
   --quiz: #4fd18b; --quiz-soft: rgba(79, 209, 139, 0.16); --quiz-ink: #062014;
+  --rec: #f07ab8; --rec-soft: rgba(240, 122, 184, 0.16); --rec-ink: #2a0a1b;
   --green: #7fcf9e; --green-soft: rgba(127, 207, 158, 0.14);
   --red: #e88a86; --red-soft: rgba(232, 138, 134, 0.14); --red-ink: #1a0b0a;
   --weekend: #171717; --overlay: rgba(6, 6, 8, 0.62);
@@ -24,6 +25,7 @@
     --ent: #c46a14; --ent-soft: rgba(196, 106, 20, 0.12);
     --foro: #7d4fc4; --foro-soft: rgba(125, 79, 196, 0.12); --foro-ink: #ffffff;
   --quiz: #1a8f52; --quiz-soft: rgba(26, 143, 82, 0.12); --quiz-ink: #ffffff;
+  --rec: #c2357f; --rec-soft: rgba(194, 53, 127, 0.12); --rec-ink: #ffffff;
     --green: #3f9d68; --green-soft: rgba(63, 157, 104, 0.12);
     --red: #d6564f; --red-soft: rgba(214, 86, 79, 0.12); --red-ink: #ffffff;
     --weekend: #f6f4ec; --overlay: rgba(30, 28, 20, 0.4);
@@ -39,6 +41,7 @@
   --ent: #c46a14; --ent-soft: rgba(196, 106, 20, 0.12);
   --foro: #7d4fc4; --foro-soft: rgba(125, 79, 196, 0.12); --foro-ink: #ffffff;
   --quiz: #1a8f52; --quiz-soft: rgba(26, 143, 82, 0.12); --quiz-ink: #ffffff;
+  --rec: #c2357f; --rec-soft: rgba(194, 53, 127, 0.12); --rec-ink: #ffffff;
   --green: #3f9d68; --green-soft: rgba(63, 157, 104, 0.12);
   --red: #d6564f; --red-soft: rgba(214, 86, 79, 0.12); --red-ink: #ffffff;
   --weekend: #f6f4ec; --overlay: rgba(30, 28, 20, 0.4);
@@ -79,6 +82,8 @@ a { color: inherit; }
 .btn-foro:hover { background: var(--foro); filter: brightness(1.08); }
 .btn-quiz { background: var(--quiz); color: var(--quiz-ink); border-color: var(--quiz); }
 .btn-quiz:hover { background: var(--quiz); filter: brightness(1.08); }
+.btn-rec { background: var(--rec); color: var(--rec-ink); border-color: var(--rec); }
+.btn-rec:hover { background: var(--rec); filter: brightness(1.08); }
 .btn-danger { background: var(--red); color: var(--red-ink); border-color: var(--red); }
 .btn-danger:hover { background: var(--red); filter: brightness(1.05); }
 .btn-ghost { background: transparent; border-color: transparent; color: var(--text-dim); }
@@ -126,6 +131,8 @@ a { color: inherit; }
 .ev.FORO svg { color: var(--foro); }
 .ev.CUESTIONARIO { background: var(--quiz-soft); }
 .ev.CUESTIONARIO svg { color: var(--quiz); }
+.ev.GRABACION { background: var(--rec-soft); }
+.ev.GRABACION svg { color: var(--rec); }
 .ev.past { opacity: 0.55; }
 .ev.past .n { text-decoration: line-through; text-decoration-color: var(--text-faint); }
 .ev:hover { filter: brightness(1.15); }
@@ -137,6 +144,7 @@ a { color: inherit; }
 .dots i.ENTREGA { background: var(--ent); }
 .dots i.FORO { background: var(--foro); }
 .dots i.CUESTIONARIO { background: var(--quiz); }
+.dots i.GRABACION { background: var(--rec); }
 @media (max-width: 640px) {
   .weekdays .long { display: none; }
   .weekdays .short { display: block; }
@@ -176,12 +184,14 @@ a { color: inherit; }
 .ENTREGA .up-ico { background: var(--ent-soft); color: var(--ent); }
 .FORO .up-ico { background: var(--foro-soft); color: var(--foro); }
 .CUESTIONARIO .up-ico { background: var(--quiz-soft); color: var(--quiz); }
+.GRABACION .up-ico { background: var(--rec-soft); color: var(--rec); }
 .up-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .up-kind { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
 .SESION .up-kind { color: var(--ses); }
 .ENTREGA .up-kind { color: var(--ent); }
 .FORO .up-kind { color: var(--foro); }
 .CUESTIONARIO .up-kind { color: var(--quiz); }
+.GRABACION .up-kind { color: var(--rec); }
 .up-title { font-size: 14px; font-weight: 700; line-height: 1.25; }
 .up-when { font-size: 12px; color: var(--text-dim); }
 .up-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
@@ -312,6 +322,7 @@ table.sheet { width: 100%; min-width: 1120px; border-collapse: separate; border-
 .sheet tr.t-ENTREGA td.rn { border-left-color: var(--ent); }
 .sheet tr.t-FORO td.rn { border-left-color: var(--foro); }
 .sheet tr.t-CUESTIONARIO td.rn { border-left-color: var(--quiz); }
+.sheet tr.t-GRABACION td.rn { border-left-color: var(--rec); }
 .sheet input, .sheet select { display: block; width: 100%; min-width: 0; background: transparent; border: none; color: var(--text); font: inherit; font-size: 12.5px; padding: 9px 8px; outline: none; }
 .sheet select { cursor: pointer; font-weight: 600; }
 .sheet select option { background: var(--surface); color: var(--text); }

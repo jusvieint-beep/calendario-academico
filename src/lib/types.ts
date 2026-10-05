@@ -1,17 +1,18 @@
-export type Category = 'SESION' | 'ENTREGA';
-export type TypeLabel = 'CLASE' | 'SESION' | 'TRABAJO' | 'CUESTIONARIO' | 'FORO';
+/** SESION: en vivo con horario · GRABACION: material disponible desde una fecha · ENTREGA: con fecha límite. */
+export type Category = 'SESION' | 'GRABACION' | 'ENTREGA';
+export type TypeLabel = 'SESION' | 'GRABACION' | 'TRABAJO' | 'CUESTIONARIO' | 'FORO';
 
-export const TYPE_LABELS: readonly TypeLabel[] = ['CLASE', 'SESION', 'TRABAJO', 'CUESTIONARIO', 'FORO'];
+export const TYPE_LABELS: readonly TypeLabel[] = ['SESION', 'GRABACION', 'TRABAJO', 'CUESTIONARIO', 'FORO'];
 
-/** Nombres antiguos que se siguen aceptando (Excel o respaldos viejos). ENTREGA pasó a llamarse CUESTIONARIO. */
-export const TYPE_ALIASES: Readonly<Record<string, TypeLabel>> = { ENTREGA: 'CUESTIONARIO' };
+/** Nombres antiguos que se siguen aceptando (Excel o respaldos viejos): CLASE → SESION, ENTREGA → CUESTIONARIO. */
+export const TYPE_ALIASES: Readonly<Record<string, TypeLabel>> = { CLASE: 'SESION', ENTREGA: 'CUESTIONARIO' };
 
 /**
  * Cómo se ve un evento. Trabajos, cuestionarios y foros se guardan con categoría ENTREGA
  * (tienen fecha límite), pero cada uno tiene color, ícono y filtro propios.
  * 'ENTREGA' aquí significa «Trabajo».
  */
-export type Kind = 'SESION' | 'ENTREGA' | 'CUESTIONARIO' | 'FORO';
+export type Kind = 'SESION' | 'GRABACION' | 'ENTREGA' | 'CUESTIONARIO' | 'FORO';
 
 /** Evento tal como lo usa la interfaz. Fechas y horas en hora local de Colombia. */
 export interface CalendarEvent {
@@ -78,6 +79,8 @@ export interface SyncResult {
   total: number;
   sessions: number;
   deliveries: number;
+  /** Grabaciones (versiones anteriores de la función SQL no lo envían). */
+  recordings?: number;
   created_count: number;
   updated_count: number;
   deleted_count: number;

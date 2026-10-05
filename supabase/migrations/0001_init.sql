@@ -30,8 +30,8 @@ comment on table public.admins is 'Lista blanca de administradores. Solo quien e
 create table if not exists public.events (
   id           uuid primary key default gen_random_uuid(),
   event_id     text not null unique,
-  category     text not null check (category in ('SESION', 'ENTREGA')),
-  type_label   text not null check (type_label in ('CLASE', 'SESION', 'TRABAJO', 'CUESTIONARIO', 'FORO')),
+  category     text not null check (category in ('SESION', 'GRABACION', 'ENTREGA')),
+  type_label   text not null check (type_label in ('SESION', 'GRABACION', 'TRABAJO', 'CUESTIONARIO', 'FORO')),
   title        text not null check (char_length(title) between 1 and 150),
   event_date   date not null,
   start_time   time,
@@ -46,8 +46,9 @@ create table if not exists public.events (
   constraint events_session_needs_start check (category <> 'SESION' or start_time is not null),
   constraint events_end_after_start check (end_time is null or start_time is null or end_time > start_time),
   constraint events_category_matches_label check (
-    (category = 'SESION'  and type_label in ('CLASE', 'SESION')) or
-    (category = 'ENTREGA' and type_label in ('TRABAJO', 'CUESTIONARIO', 'FORO'))
+    (category = 'SESION'    and type_label = 'SESION') or
+    (category = 'GRABACION' and type_label = 'GRABACION') or
+    (category = 'ENTREGA'   and type_label in ('TRABAJO', 'CUESTIONARIO', 'FORO'))
   )
 );
 
@@ -134,7 +135,7 @@ $$;
 -- -----------------------------------------------------------------------------
 -- apply_calendar_import
 --   p_rows: arreglo JSON de filas ya validadas por la app, en el orden del Excel:
---     [{ "event_id": "EVT-0001" | null, "type_label": "CLASE", "title": "...",
+--     [{ "event_id": "EVT-0001" | null, "type_label": "SESION", "title": "...",
 --        "event_date": "2026-10-05", "start_time": "08:00" | null,
 --        "end_time": "10:00" | null, "link": "https://..." | null,
 --        "description": "..." | null }, ...]
@@ -206,10 +207,14 @@ begin
   select
     x.ord::int                                                   as rn,
     nullif(upper(btrim(x.r->>'event_id')), '')                   as event_id,
-    -- ENTREGA es el nombre antiguo de CUESTIONARIO (Excel o respaldos viejos).
-    case when upper(btrim(x.r->>'type_label')) = 'ENTREGA' then 'CUESTIONARIO'
-         else upper(btrim(x.r->>'type_label')) end            as type_label,
-    case when upper(btrim(x.r->>'type_label')) in ('CLASE', 'SESION') then 'SESION' else 'ENTREGA' end as category,
+    -- Nombres antiguos (Excel o respaldos viejos): ENTREGA → CUESTIONARIO, CLASE → SESION.
+    case upper(btrim(x.r->>'type_label'))
+         when 'ENTREGA' then 'CUESTIONARIO'
+         when 'CLASE'   then 'SESION'
+         else upper(btrim(x.r->>'type_label')) end               as type_label,
+    case when upper(btrim(x.r->>'type_label')) in ('CLASE', 'SESION') then 'SESION'
+         when upper(btrim(x.r->>'type_label')) = 'GRABACION' then 'GRABACION'
+         else 'ENTREGA' end                                      as category,
     btrim(x.r->>'title')                                         as title,
     (x.r->>'event_date')::date                                   as event_date,
     (nullif(x.r->>'start_time', ''))::time                       as start_time,
@@ -301,6 +306,7 @@ begin
       'rows_before', v_before_count,
       'total', v_total,
       'sessions', (select count(*) from _incoming where category = 'SESION'),
+      'recordings', (select count(*) from _incoming where category = 'GRABACION'),
       'deliveries', (select count(*) from _incoming where category = 'ENTREGA'),
       'created_count', jsonb_array_length(v_created),
       'updated_count', jsonb_array_length(v_updated),
@@ -376,6 +382,7 @@ begin
     'rows_before', v_before_count,
     'total', v_total,
     'sessions', (select count(*) from _incoming where category = 'SESION'),
+    'recordings', (select count(*) from _incoming where category = 'GRABACION'),
     'deliveries', (select count(*) from _incoming where category = 'ENTREGA'),
     'created_count', jsonb_array_length(v_created),
     'updated_count', jsonb_array_length(v_updated),
@@ -540,9 +547,11 @@ create policy "Admins borran Excel" on storage.objects
 
 -- ---------------------------------------------------------------------------
 -- 5. Actualizaciones para una base ya creada (se puede ejecutar de nuevo)
---    Tipos: CLASE, SESION (sesiones) · TRABAJO, CUESTIONARIO, FORO (con fecha límite).
---    ENTREGA pasó a llamarse CUESTIONARIO: se convierten los eventos existentes.
+--    Tipos: SESION (en vivo) · GRABACION (disponible desde una fecha)
+--           · TRABAJO, CUESTIONARIO, FORO (con fecha límite).
+--    Nombres antiguos que se convierten: ENTREGA → CUESTIONARIO, CLASE → SESION.
 -- ---------------------------------------------------------------------------
+alter table public.events drop constraint if exists events_category_check;
 alter table public.events drop constraint if exists events_type_label_check;
 alter table public.events drop constraint if exists events_category_matches_label;
 
@@ -552,9 +561,18 @@ update public.events
        updated_at   = now()
  where type_label = 'ENTREGA';
 
+update public.events
+   set type_label   = 'SESION',
+       content_hash = public.event_hash(category, 'SESION', title, event_date, start_time, end_time, link, description),
+       updated_at   = now()
+ where type_label = 'CLASE';
+
+alter table public.events add constraint events_category_check
+  check (category in ('SESION', 'GRABACION', 'ENTREGA'));
 alter table public.events add constraint events_type_label_check
-  check (type_label in ('CLASE', 'SESION', 'TRABAJO', 'CUESTIONARIO', 'FORO'));
+  check (type_label in ('SESION', 'GRABACION', 'TRABAJO', 'CUESTIONARIO', 'FORO'));
 alter table public.events add constraint events_category_matches_label check (
-  (category = 'SESION'  and type_label in ('CLASE', 'SESION')) or
-  (category = 'ENTREGA' and type_label in ('TRABAJO', 'CUESTIONARIO', 'FORO'))
+  (category = 'SESION'    and type_label = 'SESION') or
+  (category = 'GRABACION' and type_label = 'GRABACION') or
+  (category = 'ENTREGA'   and type_label in ('TRABAJO', 'CUESTIONARIO', 'FORO'))
 );

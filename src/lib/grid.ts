@@ -37,7 +37,7 @@ export const sameCells = (a: GridCells, b: GridCells) => COLUMN_KEYS.every((k) =
 
 const stripAccents = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '');
 
-/** 'clase', 'Sesión', 'Entrega' → 'CLASE', 'SESION', 'CUESTIONARIO'. Si no es un tipo conocido, devuelve el texto tal cual. */
+/** 'sesión', 'Grabación', 'clase', 'Entrega' → 'SESION', 'GRABACION', 'SESION', 'CUESTIONARIO'. Si no es un tipo conocido, devuelve el texto tal cual. */
 export function normalizeType(value: string): string {
   const t = stripAccents(value).trim().toUpperCase();
   if (TYPE_ALIASES[t]) return TYPE_ALIASES[t];

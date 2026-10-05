@@ -8,7 +8,7 @@ const urbanist = Urbanist({ subsets: ['latin'], weight: ['400', '500', '600', '7
 
 export const metadata: Metadata = {
   title: APP_NAME,
-  description: 'Clases, sesiones y entregas académicas en un calendario claro y actualizado.'
+  description: 'Sesiones, grabaciones y entregas académicas en un calendario claro y actualizado.'
 };
 
 export const viewport: Viewport = {

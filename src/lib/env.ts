@@ -14,4 +14,4 @@ export const SUPABASE_KEY = () =>
   );
 
 export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Calendario Académico';
-export const APP_SUBTITLE = process.env.NEXT_PUBLIC_APP_SUBTITLE || 'Clases y entregas · hora de Colombia';
+export const APP_SUBTITLE = process.env.NEXT_PUBLIC_APP_SUBTITLE || 'Sesiones y entregas · hora de Colombia';

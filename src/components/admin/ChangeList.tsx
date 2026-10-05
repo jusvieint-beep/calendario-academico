@@ -83,7 +83,7 @@ export function Summary({ result, afterLabel = 'Total después', sourceLabel = '
   return (
     <div className="sum">
       <div className="stat"><span className="stat-label">{sourceLabel}</span><span className="stat-num">{result.total}</span><span className="stat-sub">Hoy hay {result.rows_before} en el calendario</span></div>
-      <div className="stat"><span className="stat-label"><i style={{ background: 'var(--ses)' }} />Clases / sesiones</span><span className="stat-num">{result.sessions}</span></div>
+      <div className="stat"><span className="stat-label"><i style={{ background: 'var(--ses)' }} />Sesiones</span><span className="stat-num">{result.sessions}</span><span className="stat-sub">{result.recordings ?? 0} {result.recordings === 1 ? 'grabación' : 'grabaciones'}</span></div>
       <div className="stat"><span className="stat-label"><i style={{ background: 'var(--ent)' }} />Trabajos, cuestionarios y foros</span><span className="stat-num">{result.deliveries}</span></div>
       <div className="stat"><span className="stat-label">Sin cambios</span><span className="stat-num">{result.unchanged_count}</span></div>
       <div className="stat"><span className="stat-label">Se crearán</span><span className="stat-num c-new">{result.created_count}</span></div>

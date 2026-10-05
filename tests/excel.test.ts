@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { parseDateCell, parseTimeCell, cellToLink, cellToText } from '../src/lib/excel/normalize.ts';
 import { validateRows, type RawRow } from '../src/lib/excel/validate.ts';
 import { normalizeHeader } from '../src/lib/excel/columns.ts';
-import { upcoming, isLive, deliveryStatus, kindOf, kindName } from '../src/lib/events.ts';
+import { upcoming, isLive, isPast, deliveryStatus, kindOf, kindName } from '../src/lib/events.ts';
 import { formatTime, keyToMs } from '../src/lib/dates.ts';
 import type { CalendarEvent } from '../src/lib/types.ts';
 
@@ -79,9 +79,11 @@ test('validación: archivo correcto produce filas normalizadas', () => {
   assert.equal(r.errors.length, 0);
   assert.equal(r.rows.length, 4);
   assert.deepEqual(r.rows[0], {
-    event_id: null, type_label: 'CLASE', title: 'Matemáticas', event_date: '2026-10-05',
+    event_id: null, type_label: 'SESION', title: 'Matemáticas', event_date: '2026-10-05',
     start_time: '08:00', end_time: '10:00', link: 'https://meet.google.com/x', description: null
   });
+  // CLASE es el nombre antiguo de SESION: se acepta y se avisa.
+  assert.ok(r.warnings.some((w) => w.row === 2 && w.column === 'TIPO' && w.message.includes('SESION')));
   assert.equal(r.rows[2].type_label, 'SESION');
   assert.equal(r.rows[3].start_time, null); // entrega sin hora: vence 23:59 en la base de datos
   // advertencia: sesión sin enlace (fila 4)
@@ -90,20 +92,20 @@ test('validación: archivo correcto produce filas normalizadas', () => {
 
 test('validación: los errores del documento de requisitos se detectan con fila y columna', () => {
   const r = validateRows([
-    row(5, { ID_EVENTO: 'EVT-004', TIPO: 'CLASE', NOMBRE: 'A', FECHA: '05/10/2026', HORA_INICIO: '08:00' }),
-    row(8, { TIPO: 'CLASE', NOMBRE: 'B', FECHA: '35/15/2026', HORA_INICIO: '08:00' }),
-    row(12, { ID_EVENTO: 'evt-004', TIPO: 'CLASE', NOMBRE: 'C', FECHA: '05/10/2026', HORA_INICIO: '09:00' }),
+    row(5, { ID_EVENTO: 'EVT-004', TIPO: 'SESION', NOMBRE: 'A', FECHA: '05/10/2026', HORA_INICIO: '08:00' }),
+    row(8, { TIPO: 'SESION', NOMBRE: 'B', FECHA: '35/15/2026', HORA_INICIO: '08:00' }),
+    row(12, { ID_EVENTO: 'evt-004', TIPO: 'SESION', NOMBRE: 'C', FECHA: '05/10/2026', HORA_INICIO: '09:00' }),
     row(15, { TIPO: 'REUNIONX', NOMBRE: 'D', FECHA: '05/10/2026' }),
-    row(19, { TIPO: 'CLASE', NOMBRE: 'E', FECHA: '05/10/2026' }),
-    row(21, { TIPO: 'CLASE', NOMBRE: 'F', FECHA: '05/10/2026', HORA_INICIO: '09:00', HORA_FIN: '07:00' }),
-    row(22, { TIPO: 'CLASE', NOMBRE: 'G', FECHA: '05/10/2026', HORA_INICIO: '09:00', LINK: 'meet.google.com/x' }),
+    row(19, { TIPO: 'SESION', NOMBRE: 'E', FECHA: '05/10/2026' }),
+    row(21, { TIPO: 'SESION', NOMBRE: 'F', FECHA: '05/10/2026', HORA_INICIO: '09:00', HORA_FIN: '07:00' }),
+    row(22, { TIPO: 'SESION', NOMBRE: 'G', FECHA: '05/10/2026', HORA_INICIO: '09:00', LINK: 'meet.google.com/x' }),
     row(23, { TIPO: 'TRABAJO', FECHA: '05/10/2026' })
   ], TODAY);
   const at = (rowN: number, col: string) => r.errors.some((e) => e.row === rowN && e.column === col);
   assert.ok(at(8, 'FECHA'), 'fecha inválida');
   assert.ok(at(12, 'ID_EVENTO'), 'ID duplicado (sin importar mayúsculas)');
   assert.ok(at(15, 'TIPO'), 'tipo no válido');
-  assert.ok(at(19, 'HORA_INICIO'), 'clase sin hora');
+  assert.ok(at(19, 'HORA_INICIO'), 'sesión sin hora');
   assert.ok(at(21, 'HORA_FIN'), 'fin antes del inicio');
   assert.ok(at(22, 'LINK'), 'enlace sin https');
   assert.ok(at(23, 'NOMBRE'), 'nombre vacío');
@@ -128,7 +130,7 @@ test('validación: advierte fechas pasadas', () => {
 test('duplicados: mismo tipo, nombre, fecha y hora bloquean el guardado', () => {
   const r = validateRows([
     row(2, { TIPO: 'CLASE', NOMBRE: 'Matemáticas II', FECHA: '05/10/2026', HORA_INICIO: '08:00' }),
-    row(3, { TIPO: 'sesion', NOMBRE: '  matematicas   ii ', FECHA: '5/10/2026', HORA_INICIO: '8:00 AM' }), // CLASE y SESION = mismo tipo; sin tildes/mayúsculas/espacios
+    row(3, { TIPO: 'sesion', NOMBRE: '  matematicas   ii ', FECHA: '5/10/2026', HORA_INICIO: '8:00 AM' }), // CLASE (nombre antiguo) y SESION = mismo tipo; sin tildes/mayúsculas/espacios
     row(4, { TIPO: 'TRABAJO', NOMBRE: 'Informe', FECHA: '08/10/2026' }),
     row(5, { TIPO: 'trabajo', NOMBRE: 'INFORME', FECHA: '08/10/2026' }) // ambos sin hora
   ], TODAY);
@@ -141,10 +143,10 @@ test('duplicados: mismo tipo, nombre, fecha y hora bloquean el guardado', () => 
 
 test('duplicados: no son duplicados si cambia el tipo, la hora o la fecha', () => {
   const r = validateRows([
-    row(2, { TIPO: 'CLASE', NOMBRE: 'Proyecto', FECHA: '05/10/2026', HORA_INICIO: '08:00' }),
+    row(2, { TIPO: 'SESION', NOMBRE: 'Proyecto', FECHA: '05/10/2026', HORA_INICIO: '08:00' }),
     row(3, { TIPO: 'CUESTIONARIO', NOMBRE: 'Proyecto', FECHA: '05/10/2026', HORA_INICIO: '08:00' }), // otro tipo
-    row(4, { TIPO: 'CLASE', NOMBRE: 'Proyecto', FECHA: '05/10/2026', HORA_INICIO: '14:00' }), // otra hora
-    row(5, { TIPO: 'CLASE', NOMBRE: 'Proyecto', FECHA: '12/10/2026', HORA_INICIO: '08:00' }), // otra fecha
+    row(4, { TIPO: 'SESION', NOMBRE: 'Proyecto', FECHA: '05/10/2026', HORA_INICIO: '14:00' }), // otra hora
+    row(5, { TIPO: 'SESION', NOMBRE: 'Proyecto', FECHA: '12/10/2026', HORA_INICIO: '08:00' }), // otra fecha
     row(6, { TIPO: 'TRABAJO', NOMBRE: 'Taller', FECHA: '06/10/2026' }),
     row(7, { TIPO: 'TRABAJO', NOMBRE: 'Taller', FECHA: '06/10/2026', HORA_INICIO: '18:00' }) // sin hora ≠ 18:00
   ], TODAY);
@@ -152,9 +154,30 @@ test('duplicados: no son duplicados si cambia el tipo, la hora o la fecha', () =
   assert.equal(r.rows.length, 6);
 });
 
+test('grabaciones: hora opcional, sin hora de fin, aviso sin enlace y duplicados aparte de las sesiones', () => {
+  const r = validateRows([
+    row(2, { TIPO: 'Grabación', NOMBRE: 'Clase 1', FECHA: '06/10/2026' }),
+    row(3, { TIPO: 'GRABACION', NOMBRE: 'Clase 2', FECHA: '06/10/2026', HORA_INICIO: '18:00', HORA_FIN: '20:00', LINK: 'https://youtu.be/x' }),
+    row(4, { TIPO: 'SESION', NOMBRE: 'Clase 2', FECHA: '06/10/2026', HORA_INICIO: '18:00' }) // misma clave, otro tipo: no es duplicado
+  ], TODAY);
+  assert.equal(r.errors.length, 0);
+  assert.equal(r.rows.length, 3);
+  assert.equal(r.rows[0].type_label, 'GRABACION');
+  assert.equal(r.rows[0].start_time, null, 'la hora es opcional');
+  assert.equal(r.rows[1].end_time, null, 'la hora de fin se ignora');
+  assert.ok(r.warnings.some((w) => w.row === 2 && w.column === 'LINK' && w.message.includes('Ver grabación')));
+  assert.ok(r.warnings.some((w) => w.row === 3 && w.column === 'HORA_FIN'));
+
+  const d = validateRows([
+    row(2, { TIPO: 'GRABACION', NOMBRE: 'Clase 1', FECHA: '06/10/2026' }),
+    row(3, { TIPO: 'grabacion', NOMBRE: 'clase 1', FECHA: '06/10/2026' })
+  ], TODAY);
+  assert.match(d.errors[0]?.message ?? '', /una grabación/);
+});
+
 const ev = (p: Partial<CalendarEvent>): CalendarEvent => ({
   event_id: p.event_id ?? Math.random().toString(36).slice(2),
-  category: 'SESION', type_label: 'CLASE', title: 'X', event_date: '2026-10-05',
+  category: 'SESION', type_label: 'SESION', title: 'X', event_date: '2026-10-05',
   start_time: null, end_time: null, link: null, description: null, ...p
 });
 
@@ -249,4 +272,15 @@ test('CUESTIONARIO: reemplaza a ENTREGA, es un tipo propio y vence como un traba
   assert.equal(kindOf(ev({ category: 'ENTREGA', type_label: 'ENTREGA' as never })), 'CUESTIONARIO', 'datos antiguos se ven como cuestionario');
   assert.equal(upcoming([quiz], { date: '2026-10-08', time: '23:58' }).length, 1);
   assert.equal(upcoming([quiz], { date: '2026-10-09', time: '00:00' }).length, 0);
+});
+
+test('grabaciones: no salen en próximas actividades, nunca vencen y tienen su propio tipo', () => {
+  const now = { date: '2026-10-05', time: '15:00' };
+  const rec = ev({ event_id: 'g', category: 'GRABACION', type_label: 'GRABACION', event_date: '2026-09-01' });
+  const futura = ev({ event_id: 'g2', category: 'GRABACION', type_label: 'GRABACION', event_date: '2026-10-09', start_time: '10:00' });
+  assert.deepEqual(upcoming([rec, futura], now), []);
+  assert.equal(isPast(rec, now), false);
+  assert.equal(kindOf(rec), 'GRABACION');
+  assert.equal(kindName(rec), 'Grabación');
+  assert.equal(kindName(ev({ type_label: 'CLASE' as CalendarEvent['type_label'] })), 'Sesión', 'eventos antiguos CLASE se muestran como Sesión');
 });

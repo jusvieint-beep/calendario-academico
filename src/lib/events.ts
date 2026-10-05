@@ -4,7 +4,8 @@ import { addMinutes, capitalize, formatDate, formatTime, keyToMs, type NowCol } 
 /**
  * Reglas aprobadas (D1 y D6):
  *  - Una entrega sin hora vence a las 23:59 y se ordena como 23:59.
- *  - Una clase sigue visible hasta su hora de fin; sin hora de fin, 1 hora después del inicio.
+ *  - Una sesión sigue visible hasta su hora de fin; sin hora de fin, 1 hora después del inicio.
+ *  - Una grabación es material disponible desde su fecha: no vence ni aparece en «Próximas actividades».
  */
 export const DEFAULT_DUE = '23:59';
 export const SESSION_DEFAULT_MINUTES = 60;
@@ -22,7 +23,9 @@ export function endKey(e: CalendarEvent): string {
 }
 
 export const nowKey = (now: NowCol) => `${now.date}T${now.time}`;
-export const isPast = (e: CalendarEvent, now: NowCol) => endKey(e) <= nowKey(now);
+export const isRecording = (e: Pick<CalendarEvent, 'category'>) => e.category === 'GRABACION';
+/** ¿Ya terminó o venció? Una grabación nunca «pasa»: sigue disponible. */
+export const isPast = (e: CalendarEvent, now: NowCol) => !isRecording(e) && endKey(e) <= nowKey(now);
 export const isLive = (e: CalendarEvent, now: NowCol) =>
   e.category === 'SESION' && startKey(e) <= nowKey(now) && !isPast(e, now);
 
@@ -30,26 +33,32 @@ export const isLive = (e: CalendarEvent, now: NowCol) =>
 export function compareEvents(a: CalendarEvent, b: CalendarEvent): number {
   const ka = startKey(a), kb = startKey(b);
   if (ka !== kb) return ka < kb ? -1 : 1;
-  if (a.category !== b.category) return a.category === 'SESION' ? -1 : 1;
+  if (a.category !== b.category) {
+    const order = { SESION: 0, ENTREGA: 1, GRABACION: 2 } as const;
+    return order[a.category] - order[b.category];
+  }
   return a.title.localeCompare(b.title, 'es');
 }
 
 export function upcoming(events: CalendarEvent[], now: NowCol, limit = UPCOMING_LIMIT): CalendarEvent[] {
-  return events.filter((e) => !isPast(e, now)).sort(compareEvents).slice(0, limit);
+  return events.filter((e) => !isRecording(e) && !isPast(e, now)).sort(compareEvents).slice(0, limit);
 }
 
 export function kindName(e: Pick<CalendarEvent, 'type_label'>): string {
   switch (e.type_label) {
-    case 'CLASE': return 'Clase';
     case 'SESION': return 'Sesión';
+    case 'GRABACION': return 'Grabación';
     case 'TRABAJO': return 'Trabajo';
     case 'FORO': return 'Foro';
     case 'CUESTIONARIO': return 'Cuestionario';
-    default: return (e.type_label as string) === 'ENTREGA' ? 'Cuestionario' : 'Trabajo';
+    default: {
+      const legacy = e.type_label as string;
+      return legacy === 'ENTREGA' ? 'Cuestionario' : legacy === 'CLASE' ? 'Sesión' : 'Trabajo';
+    }
   }
 }
 
-/** Foro → 'FORO'; Cuestionario → 'CUESTIONARIO'; el resto según su categoría ('ENTREGA' = trabajo). */
+/** Foro → 'FORO'; Cuestionario → 'CUESTIONARIO'; el resto según su categoría (SESION, GRABACION o 'ENTREGA' = trabajo). */
 export const kindOf = (e: Pick<CalendarEvent, 'category' | 'type_label'>): Kind =>
   e.type_label === 'FORO' ? 'FORO'
   : e.type_label === 'CUESTIONARIO' || (e.type_label as string) === 'ENTREGA' ? 'CUESTIONARIO'
@@ -69,6 +78,7 @@ export function deliveryStatus(e: CalendarEvent, now: NowCol, nowMs = Date.now()
 
 export function whenText(e: CalendarEvent): string {
   const date = capitalize(formatDate(e.event_date));
+  if (isRecording(e)) return `Disponible desde el ${formatDate(e.event_date)}${e.start_time ? ` · ${formatTime(e.start_time)}` : ''}`;
   if (e.category === 'SESION') {
     if (!e.start_time) return date;
     return `${date} · ${formatTime(e.start_time)}${e.end_time ? ` – ${formatTime(e.end_time)}` : ''}`;

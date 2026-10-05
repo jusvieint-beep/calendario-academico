@@ -14,11 +14,11 @@ const cells = (p: Partial<GridCells>): GridCells => ({ ...emptyCells(), ...p });
 
 test('evento publicado → fila del editor con los mismos formatos de la plantilla', () => {
   const c = eventToCells({
-    event_id: 'EVT-0001', category: 'SESION', type_label: 'CLASE', title: 'Matemáticas',
+    event_id: 'EVT-0001', category: 'SESION', type_label: 'SESION', title: 'Matemáticas',
     event_date: '2026-10-05', start_time: '08:00', end_time: null, link: null, description: 'U3'
   });
   assert.deepEqual(c, {
-    ID_EVENTO: 'EVT-0001', TIPO: 'CLASE', NOMBRE: 'Matemáticas', FECHA: '05/10/2026',
+    ID_EVENTO: 'EVT-0001', TIPO: 'SESION', NOMBRE: 'Matemáticas', FECHA: '05/10/2026',
     HORA_INICIO: '08:00', HORA_FIN: '', LINK: '', DESCRIPCION: 'U3'
   });
 });
@@ -39,7 +39,7 @@ test('pegar con encabezados: ubica cada columna por su nombre aunque cambie el o
   const m = parseClipboard('Nombre\tTipo\tFecha\tHora inicio\nInglés\tclase\t07/10/2026\t14:00\n\t\t\t\n');
   const rows = matrixToCells(m);
   assert.equal(rows.length, 1);
-  assert.deepEqual(rows[0], cells({ NOMBRE: 'Inglés', TIPO: 'CLASE', FECHA: '07/10/2026', HORA_INICIO: '14:00' }));
+  assert.deepEqual(rows[0], cells({ NOMBRE: 'Inglés', TIPO: 'SESION', FECHA: '07/10/2026', HORA_INICIO: '14:00' }));
 });
 
 test('pegar sin encabezados: 8 columnas empiezan en ID; menos empiezan en TIPO', () => {
@@ -52,7 +52,7 @@ test('pegar sin encabezados: 8 columnas empiezan en ID; menos empiezan en TIPO',
 
 test('pegar dentro de la tabla: escribe desde la celda elegida, agrega filas y protege los ID publicados', () => {
   const base = [
-    cells({ ID_EVENTO: 'EVT-0001', TIPO: 'CLASE', NOMBRE: 'A', FECHA: '01/10/2026', HORA_INICIO: '08:00' }),
+    cells({ ID_EVENTO: 'EVT-0001', TIPO: 'SESION', NOMBRE: 'A', FECHA: '01/10/2026', HORA_INICIO: '08:00' }),
     cells({})
   ];
   const isNew = (i: number) => i === 1;
@@ -64,12 +64,13 @@ test('pegar dentro de la tabla: escribe desde la celda elegida, agrega filas y p
   assert.equal(res.rows[1].ID_EVENTO, 'EVT-Y', 'en filas nuevas sí se puede pegar ID');
   assert.equal(res.rows[1].TIPO, 'CUESTIONARIO', 'el nombre antiguo ENTREGA se convierte al pegar');
   assert.equal(res.rows[2].NOMBRE, 'D');
-  assert.equal(base[0].TIPO, 'CLASE', 'no modifica la tabla original');
+  assert.equal(res.rows[2].TIPO, 'SESION', 'el nombre antiguo CLASE se convierte al pegar');
+  assert.equal(base[0].TIPO, 'SESION', 'no modifica la tabla original');
   assert.deepEqual(dropHeaderRow([['ID_EVENTO', 'TIPO', 'NOMBRE'], ['', 'CLASE', 'X']]), [['', 'CLASE', 'X']]);
 });
 
 test('duplicar para la semana siguiente: sin ID y fecha + 7 días (cambia de mes bien)', () => {
-  const copy = nextWeekCopy(cells({ ID_EVENTO: 'EVT-0003', TIPO: 'CLASE', NOMBRE: 'Física', FECHA: '28/10/2026', HORA_INICIO: '18:00' }));
+  const copy = nextWeekCopy(cells({ ID_EVENTO: 'EVT-0003', TIPO: 'SESION', NOMBRE: 'Física', FECHA: '28/10/2026', HORA_INICIO: '18:00' }));
   assert.equal(copy.ID_EVENTO, '');
   assert.equal(copy.FECHA, '04/11/2026');
   assert.equal(copy.HORA_INICIO, '18:00');
@@ -91,7 +92,7 @@ test('ordenar por fecha y hora; filas sin fecha al final', () => {
 
 test('servidor: las filas del editor se validan igual que un Excel, numeradas como en la tabla', () => {
   const ok = checkGridRows([
-    cells({ TIPO: 'CLASE', NOMBRE: 'Matemáticas', FECHA: '05/10/2026', HORA_INICIO: '08:00', HORA_FIN: '10:00', LINK: 'https://meet.google.com/x' }),
+    cells({ TIPO: 'SESION', NOMBRE: 'Matemáticas', FECHA: '05/10/2026', HORA_INICIO: '08:00', HORA_FIN: '10:00', LINK: 'https://meet.google.com/x' }),
     cells({}), // fila vacía: se ignora
     cells({ ID_EVENTO: 'EVT-0002', TIPO: 'TRABAJO', NOMBRE: 'Taller 2', FECHA: '06/10/2026' })
   ]);
@@ -103,8 +104,8 @@ test('servidor: las filas del editor se validan igual que un Excel, numeradas co
   }
 
   const bad = checkGridRows([
-    cells({ TIPO: 'CLASE', NOMBRE: 'A', FECHA: '05/10/2026', HORA_INICIO: '08:00' }),
-    cells({ TIPO: 'CLASE', NOMBRE: 'B', FECHA: '31/02/2026', HORA_INICIO: '08:00' }),
+    cells({ TIPO: 'SESION', NOMBRE: 'A', FECHA: '05/10/2026', HORA_INICIO: '08:00' }),
+    cells({ TIPO: 'SESION', NOMBRE: 'B', FECHA: '31/02/2026', HORA_INICIO: '08:00' }),
     cells({ TIPO: 'REUNION', NOMBRE: 'C', FECHA: '05/10/2026' })
   ]);
   assert.equal(bad.ok, false);

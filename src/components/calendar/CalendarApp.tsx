@@ -7,11 +7,11 @@ import {
   addDays, addMonths, capitalize, dayName, dayOfMonth, daysInMonth, formatDate, formatTime,
   monthLabel, nowInBogota, weekdayMondayFirst, WEEKDAYS_LONG, WEEKDAYS_SHORT, type NowCol
 } from '@/lib/dates';
-import { compareEvents, deliveryStatus, isLive, isPast, kindName, upcoming, whenText, kindOf } from '@/lib/events';
+import { compareEvents, deliveryStatus, isLive, isPast, kindName, upcoming, whenText, kindOf , startKey } from '@/lib/events';
 import { CategoryIcon } from '../Icons';
 import Modal from '../Modal';
 
-type Filter = 'all' | 'SESION' | 'ENTREGA' | 'CUESTIONARIO' | 'FORO';
+type Filter = 'all' | 'SESION' | 'GRABACION' | 'ENTREGA' | 'CUESTIONARIO' | 'FORO';
 type View = 'month' | 'agenda';
 
 interface Props {
@@ -59,6 +59,7 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
   const counts = {
     all: inMonth.length,
     SESION: inMonth.filter((e) => kindOf(e) === 'SESION').length,
+    GRABACION: inMonth.filter((e) => kindOf(e) === 'GRABACION').length,
     ENTREGA: inMonth.filter((e) => kindOf(e) === 'ENTREGA').length,
     CUESTIONARIO: inMonth.filter((e) => kindOf(e) === 'CUESTIONARIO').length,
     FORO: inMonth.filter((e) => kindOf(e) === 'FORO').length
@@ -162,6 +163,11 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
   };
 
   const statusBadge = (e: CalendarEvent) => {
+    if (e.category === 'GRABACION') {
+      return startKey(e) <= `${now.date}T${now.time}`
+        ? <span className="badge b-live">Disponible</span>
+        : <span className="badge b-ok">Disponible desde el {formatDate(e.event_date, false)}</span>;
+    }
     if (e.category === 'SESION') {
       if (isLive(e, now)) return <span className="badge b-live">En curso</span>;
       if (isPast(e, now)) return <span className="badge b-ok">Finalizada</span>;
@@ -172,9 +178,10 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
     return <span className={`badge ${cls}`}>{s.label}</span>;
   };
 
-  /** Botón del enlace: sesión → «Ingresar a la sesión», foro → «Ir al foro», cuestionario → «Presentar cuestionario». */
+  /** Botón del enlace: sesión → «Ingresar a la sesión», grabación → «Ver grabación», foro → «Ir al foro», cuestionario → «Presentar cuestionario». */
   const JOIN: Partial<Record<string, { cls: string; label: string }>> = {
     SESION: { cls: 'btn-ses', label: 'Ingresar a la sesión' },
+    GRABACION: { cls: 'btn-rec', label: 'Ver grabación' },
     FORO: { cls: 'btn-foro', label: 'Ir al foro' },
     CUESTIONARIO: { cls: 'btn-quiz', label: 'Presentar cuestionario' }
   };
@@ -192,7 +199,8 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
 
   const filters: [Filter, string, string, string][] = [
     ['all', 'Todas', 'var(--accent)', 'var(--accent-soft)'],
-    ['SESION', 'Clases y sesiones', 'var(--ses)', 'var(--ses-soft)'],
+    ['SESION', 'Sesiones', 'var(--ses)', 'var(--ses-soft)'],
+    ['GRABACION', 'Grabaciones', 'var(--rec)', 'var(--rec-soft)'],
     ['ENTREGA', 'Trabajos', 'var(--ent)', 'var(--ent-soft)'],
     ['CUESTIONARIO', 'Cuestionarios', 'var(--quiz)', 'var(--quiz-soft)'],
     ['FORO', 'Foros', 'var(--foro)', 'var(--foro-soft)']
@@ -262,11 +270,12 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
                 </div>
               );
             }) : (
-              <div className="empty"><b>No hay actividades próximas</b>Cuando se publiquen nuevas clases o entregas aparecerán aquí.</div>
+              <div className="empty"><b>No hay actividades próximas</b>Cuando se publiquen nuevas sesiones o entregas aparecerán aquí.</div>
             )}
           </div>
           <div className="legend">
-            <span><i style={{ background: 'var(--ses)' }} />Clase / sesión</span>
+            <span><i style={{ background: 'var(--ses)' }} />Sesión</span>
+            <span><i style={{ background: 'var(--rec)' }} />Grabación</span>
             <span><i style={{ background: 'var(--ent)' }} />Trabajo</span>
             <span><i style={{ background: 'var(--quiz)' }} />Cuestionario</span>
             <span><i style={{ background: 'var(--foro)' }} />Foro</span>
@@ -288,7 +297,7 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
           {(byDay.get(day) ?? []).length ? (
             <div className="ag-list">{(byDay.get(day) ?? []).map((e) => chip(e, true))}</div>
           ) : (
-            <div className="empty" style={{ padding: 20 }}><b>Sin actividades</b>Este día no tiene clases ni entregas.</div>
+            <div className="empty" style={{ padding: 20 }}><b>Sin actividades</b>Este día no tiene sesiones, grabaciones ni entregas.</div>
           )}
         </Modal>
       )}
@@ -303,7 +312,14 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
             </div>
             <button className="icon-btn x" type="button" aria-label="Cerrar" onClick={() => setDetail(null)}>✕</button>
           </div>
-          {detail.category === 'SESION' ? (
+          {detail.category === 'GRABACION' ? (
+            <dl className="kv">
+              <dt>Disponible desde</dt><dd>{capitalize(formatDate(detail.event_date, true, true))}{detail.start_time ? ` · ${formatTime(detail.start_time)}` : ''}</dd>
+              <dt>Tipo</dt><dd>{kindName(detail)}</dd>
+              <dt>Estado</dt><dd>{statusBadge(detail)}</dd>
+              {detail.description && (<><dt>Descripción</dt><dd>{detail.description}</dd></>)}
+            </dl>
+          ) : detail.category === 'SESION' ? (
             <>
               {isLive(detail, now) && <div><span className="badge b-live">En curso</span></div>}
               <dl className="kv">
@@ -327,7 +343,8 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
           <div className="modal-actions">
             <button className="btn" type="button" onClick={() => setDetail(null)}>Cerrar</button>
             {detail.category === 'SESION' && (joinButton(detail) ?? <button className="btn" type="button" disabled>Sin enlace disponible</button>)}
-            {detail.category !== 'SESION' && joinButton(detail)}
+            {detail.category === 'GRABACION' && (joinButton(detail) ?? <button className="btn" type="button" disabled>Grabación aún no disponible</button>)}
+            {detail.category === 'ENTREGA' && joinButton(detail)}
           </div>
         </Modal>
       )}

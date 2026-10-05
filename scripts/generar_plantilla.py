@@ -25,6 +25,7 @@ HEAD_FILL = PatternFill("solid", fgColor="1B1B1B")
 ACCENT = "EFF422"
 SES_FILL = PatternFill("solid", fgColor="E3ECFB")
 ENT_FILL = PatternFill("solid", fgColor="FBEBDC")
+REC_FILL = PatternFill("solid", fgColor="FBE1EE")
 QUIZ_FILL = PatternFill("solid", fgColor="DDF3E6")
 FORO_FILL = PatternFill("solid", fgColor="EEE4FA")
 SOFT_FILL = PatternFill("solid", fgColor="F2F0E6")
@@ -34,7 +35,7 @@ BORDER = Border(left=thin, right=thin, top=thin, bottom=thin)
 # (columna, ancho, ayuda en la celda)
 COLUMNS = [
     ("ID_EVENTO", 13, "Déjalo vacío en filas nuevas: el sistema asigna el ID. No cambies los ID existentes."),
-    ("TIPO", 12, "Elige de la lista: CLASE, SESION, TRABAJO, CUESTIONARIO o FORO."),
+    ("TIPO", 12, "Elige de la lista: SESION, GRABACION, TRABAJO, CUESTIONARIO o FORO."),
     ("NOMBRE", 34, "Nombre que verán los estudiantes. Máximo 150 caracteres."),
     ("FECHA", 13, "Formato dd/mm/aaaa. Ejemplo: 05/10/2026."),
     ("HORA_INICIO", 13, "Formato 24 h (08:00, 14:30). Obligatoria en clases. En trabajos es la hora límite."),
@@ -65,9 +66,9 @@ def build_calendar_sheet(ws):
         ws.cell(row=r, column=8).alignment = Alignment(wrap_text=False)
 
     last = ROWS + 1
-    tipo = DataValidation(type="list", formula1='"CLASE,SESION,TRABAJO,CUESTIONARIO,FORO"', allow_blank=True,
+    tipo = DataValidation(type="list", formula1='"SESION,GRABACION,TRABAJO,CUESTIONARIO,FORO"', allow_blank=True,
                           showErrorMessage=True, errorTitle="Tipo no válido",
-                          error="Elige CLASE, SESION, TRABAJO, CUESTIONARIO o FORO.",
+                          error="Elige SESION, GRABACION, TRABAJO, CUESTIONARIO o FORO.",
                           showInputMessage=True, promptTitle="TIPO", prompt=COLUMNS[1][2])
     tipo.add(f"B2:B{last}")
 
@@ -172,7 +173,7 @@ def build_instructions_sheet(wb):
         ["Columna", "¿Obligatoria?", "Formato", "Ejemplo", "Notas"],
         [
             ["ID_EVENTO", "No", "Texto", "EVT-0001", "Vacío en filas nuevas. Único: no puede repetirse."],
-            ["TIPO", "Sí", "Lista", "CLASE", "CLASE o SESION = sesión (azul). TRABAJO = trabajo (naranja). CUESTIONARIO = cuestionario o examen (verde). FORO = foro (violeta). Los tres usan hora límite."],
+            ["TIPO", "Sí", "Lista", "SESION", "SESION = sesión en vivo (azul). GRABACION = grabación disponible desde su fecha (rosa). TRABAJO (naranja), CUESTIONARIO (verde) y FORO (violeta) usan hora límite."],
             ["NOMBRE", "Sí", "Texto", "Matemáticas II", "Máximo 150 caracteres."],
             ["FECHA", "Sí", "dd/mm/aaaa", "05/10/2026", "Fecha de la clase o de la entrega."],
             ["HORA_INICIO", "Sí en clases", "HH:MM (24 h)", "08:00", "En trabajos es la hora límite. Si un trabajo no tiene hora, vence a las 11:59 PM."],
@@ -187,8 +188,8 @@ def build_instructions_sheet(wb):
     table(
         ["ID_EVENTO", "TIPO", "NOMBRE", "FECHA · HORAS", "LINK / DESCRIPCIÓN"],
         [
-            ["EVT-0001", "CLASE", "Matemáticas II", "05/10/2026 · 08:00 – 10:00", "https://meet.google.com/abc · Unidad 3"],
-            ["(vacío)", "SESION", "Tutoría de proyecto", "10/10/2026 · 10:00 – 12:00", "https://zoom.us/j/123 · Revisión de avances"],
+            ["EVT-0001", "SESION", "Matemáticas II", "05/10/2026 · 08:00 – 10:00", "https://meet.google.com/abc · Unidad 3"],
+            ["(vacío)", "GRABACION", "Grabación: Matemáticas II", "05/10/2026 · sin hora", "https://youtu.be/abc · Clase del 5 de octubre"],
             ["EVT-0002", "TRABAJO", "Taller 2", "06/10/2026 · 23:59", "Subir en PDF"],
             ["(vacío)", "CUESTIONARIO", "Quiz unidad 2", "08/10/2026 · sin hora", "Vence a las 11:59 PM de ese día"],
             ["(vacío)", "FORO", "Foro: la complejidad de la vida", "07/03/2027 · 23:59", "Participación en el foro de la plataforma"],
@@ -203,7 +204,7 @@ def build_instructions_sheet(wb):
         [
             ["Fecha como 35/15/2026", "", "", "", "Revisa día y mes. Debe ser una fecha real en formato dd/mm/aaaa."],
             ["ID_EVENTO repetido", "", "", "", "Cada ID aparece una sola vez. En filas nuevas deja la celda vacía."],
-            ["Tipo «REUNION»", "", "", "", "Usa solo CLASE, SESION, TRABAJO, CUESTIONARIO o FORO."],
+            ["Tipo «REUNION»", "", "", "", "Usa solo SESION, GRABACION, TRABAJO, CUESTIONARIO o FORO."],
             ["Clase sin hora de inicio", "", "", "", "Las clases y sesiones necesitan HORA_INICIO."],
             ["Hora fin antes del inicio", "", "", "", "Corrige HORA_FIN o déjala vacía."],
             ["Link sin https://", "", "", "", "Copia el enlace completo, empezando por https://"],
