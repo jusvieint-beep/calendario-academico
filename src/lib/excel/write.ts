@@ -98,7 +98,7 @@ export async function buildCalendarWorkbook(events: CalendarEvent[] = []): Promi
     ['Plantilla del Calendario Académico', 'title'],
     ['', 'p'],
     ['Cómo usar este archivo', 'h'],
-    ['1. Escribe cada sesión, grabación, trabajo, cuestionario o foro en una fila de la hoja «Calendario», desde la fila 2.', 'p'],
+    ['1. Escribe cada sesión, grabación, entrega, cuestionario o foro en una fila de la hoja «Calendario», desde la fila 2.', 'p'],
     ['2. Los encabezados en amarillo son obligatorios. Los grises son opcionales.', 'p'],
     ['3. Deja ID_EVENTO vacío en las filas nuevas. La app asigna el ID al importar.', 'p'],
     ['4. Guarda como Libro de Excel (.xlsx) y súbelo en el panel /admin.', 'p'],
@@ -109,7 +109,7 @@ export async function buildCalendarWorkbook(events: CalendarEvent[] = []): Promi
     ['• Para editar después, descarga el «Excel actual» desde /admin: ya trae los ID. No reutilices archivos viejos.', 'p'],
     ['• No cambies el nombre de la hoja «Calendario» ni los encabezados de la fila 1.', 'p'],
     ['• Fechas y horas de Colombia (UTC-5). Horas en formato 24 h: 08:00, 14:30, 23:59.', 'p'],
-    ['• SESION_ZAJUNA (prioritaria), SESION_ADICIONAL y DUDAS (espacio de dudas por chat) necesitan HORA_INICIO. GRABACION se muestra desde su fecha (hora opcional). En TRABAJO, CUESTIONARIO y FORO, HORA_INICIO es la hora límite; vacía = 11:59 PM.', 'p'],
+    ['• SESION_ZAJUNA (prioritaria), SESION_ADICIONAL y DUDAS (espacio de dudas por chat) necesitan HORA_INICIO. GRABACION se muestra desde su fecha (hora opcional). En ENTREGA, CUESTIONARIO y FORO, HORA_INICIO es la hora límite; vacía = 11:59 PM.', 'p'],
     ['• Un archivo con errores no modifica nada. La app indica fila, columna y cómo corregir cada error.', 'p']
   ];
   lines.forEach(([text, kind], i) => {

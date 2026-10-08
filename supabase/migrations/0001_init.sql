@@ -31,7 +31,7 @@ create table if not exists public.events (
   id           uuid primary key default gen_random_uuid(),
   event_id     text not null unique,
   category     text not null check (category in ('SESION', 'GRABACION', 'ENTREGA')),
-  type_label   text not null check (type_label in ('SESION_ZAJUNA', 'SESION_ADICIONAL', 'DUDAS', 'GRABACION', 'TRABAJO', 'CUESTIONARIO', 'FORO')),
+  type_label   text not null check (type_label in ('SESION_ZAJUNA', 'SESION_ADICIONAL', 'DUDAS', 'GRABACION', 'ENTREGA', 'CUESTIONARIO', 'FORO')),
   title        text not null check (char_length(title) between 1 and 150),
   event_date   date not null,
   start_time   time,
@@ -48,7 +48,7 @@ create table if not exists public.events (
   constraint events_category_matches_label check (
     (category = 'SESION'    and type_label in ('SESION_ZAJUNA', 'SESION_ADICIONAL', 'DUDAS')) or
     (category = 'GRABACION' and type_label = 'GRABACION') or
-    (category = 'ENTREGA'   and type_label in ('TRABAJO', 'CUESTIONARIO', 'FORO'))
+    (category = 'ENTREGA'   and type_label in ('ENTREGA', 'CUESTIONARIO', 'FORO'))
   )
 );
 
@@ -207,9 +207,9 @@ begin
   select
     x.ord::int                                                   as rn,
     nullif(upper(btrim(x.r->>'event_id')), '')                   as event_id,
-    -- Nombres antiguos (Excel o respaldos viejos): ENTREGA → CUESTIONARIO; CLASE y SESION → SESION_ZAJUNA.
+    -- Nombres antiguos (Excel o respaldos viejos): TRABAJO → ENTREGA; CLASE y SESION → SESION_ZAJUNA.
     case upper(btrim(x.r->>'type_label'))
-         when 'ENTREGA' then 'CUESTIONARIO'
+         when 'TRABAJO' then 'ENTREGA'
          when 'CLASE'   then 'SESION_ZAJUNA'
          when 'SESION'  then 'SESION_ZAJUNA'
          else upper(btrim(x.r->>'type_label')) end               as type_label,
@@ -550,31 +550,70 @@ create policy "Admins borran Excel" on storage.objects
 -- 5. Actualizaciones para una base ya creada (se puede ejecutar de nuevo)
 --    Tipos: SESION_ZAJUNA (prioritaria) · SESION_ADICIONAL · DUDAS (espacio de dudas por chat),
 --           todos en vivo con hora de inicio · GRABACION (disponible desde una fecha)
---           · TRABAJO, CUESTIONARIO, FORO (con fecha límite).
---    Nombres antiguos que se convierten: ENTREGA → CUESTIONARIO; CLASE y SESION → SESION_ZAJUNA.
+--           · ENTREGA, CUESTIONARIO, FORO (con fecha límite).
+--    Historia de nombres: ENTREGA significó «cuestionario» hasta oct-2026 (pasó a CUESTIONARIO);
+--    luego TRABAJO pasó a llamarse ENTREGA. CLASE y SESION pasaron a SESION_ZAJUNA.
+--    La conversión TRABAJO → ENTREGA solo se hace si la base todavía tiene el esquema con TRABAJO,
+--    así que volver a ejecutar este archivo no confunde las entregas nuevas con cuestionarios.
 -- ---------------------------------------------------------------------------
-alter table public.events drop constraint if exists events_category_check;
-alter table public.events drop constraint if exists events_type_label_check;
-alter table public.events drop constraint if exists events_category_matches_label;
+do $upd$
+declare
+  old_schema boolean;
+  fix_label constant text := $f$
+    select coalesce(jsonb_agg(
+             case when e ? 'type_label' then
+               jsonb_set(e, '{type_label}', to_jsonb(case e->>'type_label'
+                 when 'ENTREGA' then 'CUESTIONARIO'
+                 when 'TRABAJO' then 'ENTREGA'
+                 when 'CLASE'   then 'SESION_ZAJUNA'
+                 when 'SESION'  then 'SESION_ZAJUNA'
+                 else e->>'type_label' end))
+             else e end order by ord), '[]'::jsonb)
+      from jsonb_array_elements($1) with ordinality as t(e, ord)$f$;
+  b jsonb; a jsonb; rec record;
+begin
+  select coalesce(bool_or(pg_get_constraintdef(oid) like '%TRABAJO%'), false) into old_schema
+    from pg_constraint
+   where conrelid = 'public.events'::regclass and conname = 'events_type_label_check';
 
-update public.events
-   set type_label   = 'CUESTIONARIO',
-       content_hash = public.event_hash(category, 'CUESTIONARIO', title, event_date, start_time, end_time, link, description),
-       updated_at   = now()
- where type_label = 'ENTREGA';
+  alter table public.events drop constraint if exists events_category_check;
+  alter table public.events drop constraint if exists events_type_label_check;
+  alter table public.events drop constraint if exists events_category_matches_label;
 
-update public.events
-   set type_label   = 'SESION_ZAJUNA',
-       content_hash = public.event_hash(category, 'SESION_ZAJUNA', title, event_date, start_time, end_time, link, description),
-       updated_at   = now()
- where type_label in ('CLASE', 'SESION');
+  if old_schema then
+    -- Primero ENTREGA (antiguo cuestionario) → CUESTIONARIO; después TRABAJO → ENTREGA.
+    update public.events
+       set type_label = 'CUESTIONARIO',
+           content_hash = public.event_hash(category, 'CUESTIONARIO', title, event_date, start_time, end_time, link, description),
+           updated_at = now()
+     where type_label = 'ENTREGA';
+    update public.events
+       set type_label = 'ENTREGA',
+           content_hash = public.event_hash(category, 'ENTREGA', title, event_date, start_time, end_time, link, description),
+           updated_at = now()
+     where type_label = 'TRABAJO';
+    -- Respaldos: mismos cambios, para que «Deshacer» restaure cada evento con su tipo correcto.
+    for rec in select import_id, before_events, after_events from public.event_snapshots loop
+      execute fix_label into b using rec.before_events;
+      execute fix_label into a using rec.after_events;
+      update public.event_snapshots set before_events = b, after_events = a where import_id = rec.import_id;
+    end loop;
+  end if;
 
-alter table public.events add constraint events_category_check
-  check (category in ('SESION', 'GRABACION', 'ENTREGA'));
-alter table public.events add constraint events_type_label_check
-  check (type_label in ('SESION_ZAJUNA', 'SESION_ADICIONAL', 'DUDAS', 'GRABACION', 'TRABAJO', 'CUESTIONARIO', 'FORO'));
-alter table public.events add constraint events_category_matches_label check (
-  (category = 'SESION'    and type_label in ('SESION_ZAJUNA', 'SESION_ADICIONAL', 'DUDAS')) or
-  (category = 'GRABACION' and type_label = 'GRABACION') or
-  (category = 'ENTREGA'   and type_label in ('TRABAJO', 'CUESTIONARIO', 'FORO'))
-);
+  update public.events
+     set type_label = 'SESION_ZAJUNA',
+         content_hash = public.event_hash(category, 'SESION_ZAJUNA', title, event_date, start_time, end_time, link, description),
+         updated_at = now()
+   where type_label in ('CLASE', 'SESION');
+
+  alter table public.events add constraint events_category_check
+    check (category in ('SESION', 'GRABACION', 'ENTREGA'));
+  alter table public.events add constraint events_type_label_check
+    check (type_label in ('SESION_ZAJUNA', 'SESION_ADICIONAL', 'DUDAS', 'GRABACION', 'ENTREGA', 'CUESTIONARIO', 'FORO'));
+  alter table public.events add constraint events_category_matches_label check (
+    (category = 'SESION'    and type_label in ('SESION_ZAJUNA', 'SESION_ADICIONAL', 'DUDAS')) or
+    (category = 'GRABACION' and type_label = 'GRABACION') or
+    (category = 'ENTREGA'   and type_label in ('ENTREGA', 'CUESTIONARIO', 'FORO'))
+  );
+end
+$upd$;

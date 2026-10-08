@@ -62,7 +62,7 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
     }
 
     // TIPO. Se acepta «Sesión Zajuna», «sesion zajuna» o «SESION_ZAJUNA». Los nombres antiguos
-    // (SESION, CLASE, ENTREGA) se aceptan con aviso y se guardan con el nombre oficial.
+    // (SESION, CLASE, TRABAJO) se aceptan con aviso y se guardan con el nombre oficial.
     const typeRaw = cellToText(cells.TIPO);
     const resolved = resolveType(typeRaw);
     let type: TypeLabel | null = null;
@@ -110,8 +110,8 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
       err(row, 'HORA_INICIO', cells.HORA_INICIO, isDoubts ? 'Los espacios de dudas necesitan hora de inicio.' : 'Las sesiones necesitan hora de inicio.', 'Escribe la hora de inicio, por ejemplo 08:00.');
     }
     if (type && !isSession && end) {
-      // Grabaciones, trabajos, cuestionarios y foros no usan hora de fin.
-      warn(row, 'HORA_FIN', cells.HORA_FIN, `${isRecording ? 'Las grabaciones' : 'Los trabajos, cuestionarios y foros'} no usan hora de fin; se ignorará.`, isRecording ? 'Si quieres indicar desde qué hora está disponible, escríbela en HORA_INICIO.' : 'Si quieres una hora límite, escríbela en HORA_INICIO.');
+      // Grabaciones, entregas, cuestionarios y foros no usan hora de fin.
+      warn(row, 'HORA_FIN', cells.HORA_FIN, `${isRecording ? 'Las grabaciones' : 'Las entregas, cuestionarios y foros'} no usan hora de fin; se ignorará.`, isRecording ? 'Si quieres indicar desde qué hora está disponible, escríbela en HORA_INICIO.' : 'Si quieres una hora límite, escríbela en HORA_INICIO.');
       end = null;
     }
     if (isSession && start && end && end <= start) {
@@ -149,10 +149,10 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
       warn(row, 'FECHA', cells.FECHA, `«${title}» tiene fecha pasada (${formatDateShort(date)}). Se mostrará como finalizada o vencida.`);
     }
 
-    // Duplicados: mismo tipo (sesión Zajuna, sesión adicional, dudas, grabación, trabajo, cuestionario o foro), nombre, fecha y hora → error, no se guarda.
+    // Duplicados: mismo tipo (sesión Zajuna, sesión adicional, dudas, grabación, entrega, cuestionario o foro), nombre, fecha y hora → error, no se guarda.
     // El nombre se compara sin mayúsculas, tildes ni espacios repetidos.
     const signature = [
-      type === 'TRABAJO' || !type ? 'TRABAJO' : type,
+      type,
       stripAccents(title).toLowerCase(),
       date,
       start ?? (isSession ? '' : 'sin hora')
@@ -161,7 +161,7 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
     if (firstRow !== undefined) {
       err(
         row, 'NOMBRE', title,
-        `Evento duplicado: la fila ${firstRow} ya tiene ${type === 'SESION_ZAJUNA' ? 'una sesión Zajuna' : type === 'SESION_ADICIONAL' ? 'una sesión adicional' : isDoubts ? 'un espacio de dudas' : isRecording ? 'una grabación' : type === 'FORO' ? 'un foro' : type === 'CUESTIONARIO' ? 'un cuestionario' : 'un trabajo'} «${title}» el ${formatDateShort(date)}${start ? ` a las ${start}` : ' sin hora'}.`,
+        `Evento duplicado: la fila ${firstRow} ya tiene ${type === 'SESION_ZAJUNA' ? 'una sesión Zajuna' : type === 'SESION_ADICIONAL' ? 'una sesión adicional' : isDoubts ? 'un espacio de dudas' : isRecording ? 'una grabación' : type === 'FORO' ? 'un foro' : type === 'CUESTIONARIO' ? 'un cuestionario' : 'una entrega'} «${title}» el ${formatDateShort(date)}${start ? ` a las ${start}` : ' sin hora'}.`,
         'Elimina una de las dos filas. Si son eventos distintos, cambia el nombre o la hora.'
       );
       continue;

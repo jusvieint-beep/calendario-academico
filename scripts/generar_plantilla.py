@@ -37,10 +37,10 @@ BORDER = Border(left=thin, right=thin, top=thin, bottom=thin)
 # (columna, ancho, ayuda en la celda)
 COLUMNS = [
     ("ID_EVENTO", 13, "Déjalo vacío en filas nuevas: el sistema asigna el ID. No cambies los ID existentes."),
-    ("TIPO", 20, "Elige de la lista: SESION_ZAJUNA, SESION_ADICIONAL, DUDAS, GRABACION, TRABAJO, CUESTIONARIO o FORO."),
+    ("TIPO", 20, "Elige de la lista: SESION_ZAJUNA, SESION_ADICIONAL, DUDAS, GRABACION, ENTREGA, CUESTIONARIO o FORO."),
     ("NOMBRE", 34, "Nombre que verán los estudiantes. Máximo 150 caracteres."),
     ("FECHA", 13, "Formato dd/mm/aaaa. Ejemplo: 05/10/2026."),
-    ("HORA_INICIO", 13, "Formato 24 h (08:00, 14:30). Obligatoria en sesiones y dudas. En trabajos es la hora límite."),
+    ("HORA_INICIO", 13, "Formato 24 h (08:00, 14:30). Obligatoria en sesiones y dudas. En entregas es la hora límite."),
     ("HORA_FIN", 11, "Solo para sesiones y dudas. Debe ser posterior a la hora de inicio."),
     ("LINK", 42, "Enlace de la sesión, del chat de dudas o del recurso (https://...). Opcional."),
     ("DESCRIPCION", 46, "Información adicional. Opcional. Máximo 2.000 caracteres."),
@@ -68,9 +68,9 @@ def build_calendar_sheet(ws):
         ws.cell(row=r, column=8).alignment = Alignment(wrap_text=False)
 
     last = ROWS + 1
-    tipo = DataValidation(type="list", formula1='"SESION_ZAJUNA,SESION_ADICIONAL,DUDAS,GRABACION,TRABAJO,CUESTIONARIO,FORO"', allow_blank=True,
+    tipo = DataValidation(type="list", formula1='"SESION_ZAJUNA,SESION_ADICIONAL,DUDAS,GRABACION,ENTREGA,CUESTIONARIO,FORO"', allow_blank=True,
                           showErrorMessage=True, errorTitle="Tipo no válido",
-                          error="Elige SESION_ZAJUNA, SESION_ADICIONAL, DUDAS, GRABACION, TRABAJO, CUESTIONARIO o FORO.",
+                          error="Elige SESION_ZAJUNA, SESION_ADICIONAL, DUDAS, GRABACION, ENTREGA, CUESTIONARIO o FORO.",
                           showInputMessage=True, promptTitle="TIPO", prompt=COLUMNS[1][2])
     tipo.add(f"B2:B{last}")
 
@@ -156,7 +156,7 @@ def build_instructions_sheet(wb):
             row += 1
 
     title("Calendario Académico · Cómo llenar esta plantilla", 18)
-    para("Llena la hoja «Calendario» con TODAS las sesiones, espacios de dudas, grabaciones, trabajos, cuestionarios y foros. "
+    para("Llena la hoja «Calendario» con TODAS las sesiones, espacios de dudas, grabaciones, entregas, cuestionarios y foros. "
          "Una fila por actividad. No cambies los nombres de las columnas ni el nombre de la hoja.", height=32)
     row += 1
 
@@ -175,10 +175,10 @@ def build_instructions_sheet(wb):
         ["Columna", "¿Obligatoria?", "Formato", "Ejemplo", "Notas"],
         [
             ["ID_EVENTO", "No", "Texto", "EVT-0001", "Vacío en filas nuevas. Único: no puede repetirse."],
-            ["TIPO", "Sí", "Lista", "SESION_ZAJUNA", "SESION_ZAJUNA = sesión Zajuna, prioritaria (azul intenso). SESION_ADICIONAL = sesión adicional (cian). DUDAS = espacio de dudas por chat (ámbar). Las tres son en vivo con hora de inicio. GRABACION = grabación disponible desde su fecha (rosa). TRABAJO (rojo), CUESTIONARIO (verde) y FORO (violeta) usan hora límite."],
+            ["TIPO", "Sí", "Lista", "SESION_ZAJUNA", "SESION_ZAJUNA = sesión Zajuna, prioritaria (azul intenso). SESION_ADICIONAL = sesión adicional (cian). DUDAS = espacio de dudas por chat (ámbar). Las tres son en vivo con hora de inicio. GRABACION = grabación disponible desde su fecha (rosa). ENTREGA (rojo), CUESTIONARIO (verde) y FORO (violeta) usan hora límite."],
             ["NOMBRE", "Sí", "Texto", "Matemáticas II", "Máximo 150 caracteres."],
             ["FECHA", "Sí", "dd/mm/aaaa", "05/10/2026", "Fecha de la sesión, del espacio de dudas o de la entrega."],
-            ["HORA_INICIO", "Sí en sesiones y dudas", "HH:MM (24 h)", "08:00", "En trabajos es la hora límite. Si un trabajo no tiene hora, vence a las 11:59 PM."],
+            ["HORA_INICIO", "Sí en sesiones y dudas", "HH:MM (24 h)", "08:00", "En entregas es la hora límite. Si una entrega no tiene hora, vence a las 11:59 PM."],
             ["HORA_FIN", "No", "HH:MM (24 h)", "10:00", "Solo para sesiones y dudas. Debe ser posterior a la hora de inicio. Sin hora fin, se considera de 1 hora."],
             ["LINK", "No", "https://…", "https://meet.google.com/abc", "Sesiones: botón «Ingresar a la sesión». Dudas: botón «Ir al chat de dudas» (agrégalo cuando se tenga). Sin enlace se publica sin botón."],
             ["DESCRIPCION", "No", "Texto", "Traer calculadora", "Máximo 2.000 caracteres."],
@@ -194,7 +194,7 @@ def build_instructions_sheet(wb):
             ["(vacío)", "SESION_ADICIONAL", "Refuerzo de Matemáticas", "06/10/2026 · 18:00 – 19:00", "https://meet.google.com/abc"],
             ["(vacío)", "DUDAS", "Resolución de dudas", "07/10/2026 · 19:00 – 20:00", "Enlace al chat cuando se tenga"],
             ["(vacío)", "GRABACION", "Grabación: Matemáticas II", "05/10/2026 · sin hora", "https://youtu.be/abc · Clase del 5 de octubre"],
-            ["EVT-0002", "TRABAJO", "Taller 2", "06/10/2026 · 23:59", "Subir en PDF"],
+            ["EVT-0002", "ENTREGA", "Taller 2", "06/10/2026 · 23:59", "Subir en PDF"],
             ["(vacío)", "CUESTIONARIO", "Quiz unidad 2", "08/10/2026 · sin hora", "Vence a las 11:59 PM de ese día"],
             ["(vacío)", "FORO", "Foro: la complejidad de la vida", "07/03/2027 · 23:59", "Participación en el foro de la plataforma"],
         ],
@@ -208,7 +208,7 @@ def build_instructions_sheet(wb):
         [
             ["Fecha como 35/15/2026", "", "", "", "Revisa día y mes. Debe ser una fecha real en formato dd/mm/aaaa."],
             ["ID_EVENTO repetido", "", "", "", "Cada ID aparece una sola vez. En filas nuevas deja la celda vacía."],
-            ["Tipo «REUNION»", "", "", "", "Usa solo SESION_ZAJUNA, SESION_ADICIONAL, DUDAS, GRABACION, TRABAJO, CUESTIONARIO o FORO."],
+            ["Tipo «REUNION»", "", "", "", "Usa solo SESION_ZAJUNA, SESION_ADICIONAL, DUDAS, GRABACION, ENTREGA, CUESTIONARIO o FORO."],
             ["Sesión o dudas sin hora de inicio", "", "", "", "Las sesiones y los espacios de dudas necesitan HORA_INICIO."],
             ["Hora fin antes del inicio", "", "", "", "Corrige HORA_FIN o déjala vacía."],
             ["Link sin https://", "", "", "", "Copia el enlace completo, empezando por https://"],

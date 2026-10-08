@@ -56,12 +56,12 @@ export function kindName(e: Pick<CalendarEvent, 'type_label'>): string {
     case 'SESION_ADICIONAL': return 'Sesión adicional';
     case 'DUDAS': return 'Dudas';
     case 'GRABACION': return 'Grabación';
-    case 'TRABAJO': return 'Trabajo';
+    case 'ENTREGA': return 'Entrega';
     case 'FORO': return 'Foro';
     case 'CUESTIONARIO': return 'Cuestionario';
     default: {
       const legacy = e.type_label as string;
-      return legacy === 'ENTREGA' ? 'Cuestionario' : legacy === 'CLASE' || legacy === 'SESION' ? 'Sesión Zajuna' : 'Trabajo';
+      return legacy === 'CLASE' || legacy === 'SESION' ? 'Sesión Zajuna' : 'Entrega';
     }
   }
 }
@@ -71,11 +71,11 @@ export const isPriority = (e: Pick<CalendarEvent, 'category' | 'type_label'>) =>
 
 /**
  * Foro → 'FORO'; Cuestionario → 'CUESTIONARIO'; sesiones según su tipo (SESION_ZAJUNA, SESION_ADICIONAL, DUDAS;
- * los nombres antiguos SESION y CLASE cuentan como Zajuna); el resto según su categoría (GRABACION o 'ENTREGA' = trabajo).
+ * los nombres antiguos SESION y CLASE cuentan como Zajuna); el resto según su categoría (GRABACION o ENTREGA).
  */
 export const kindOf = (e: Pick<CalendarEvent, 'category' | 'type_label'>): Kind =>
   e.type_label === 'FORO' ? 'FORO'
-  : e.type_label === 'CUESTIONARIO' || (e.type_label as string) === 'ENTREGA' ? 'CUESTIONARIO'
+  : e.type_label === 'CUESTIONARIO' ? 'CUESTIONARIO'
   : e.category === 'SESION' ? (e.type_label === 'SESION_ADICIONAL' || e.type_label === 'DUDAS' ? e.type_label : 'SESION_ZAJUNA')
   : e.category;
 

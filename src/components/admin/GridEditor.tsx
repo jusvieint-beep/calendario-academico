@@ -49,7 +49,7 @@ const BIG_DELETE_RATIO = 0.3;
 const EMPTY_START_ROWS = 5;
 const MAX_LISTED_ERRORS = 15;
 
-/** En trabajos, cuestionarios y foros, la hora vacía significa 11:59 PM y la hora de fin no aplica. */
+/** En entregas, cuestionarios y foros, la hora vacía significa 11:59 PM y la hora de fin no aplica. */
 function placeholderFor(key: ColumnKey, category: string): string | undefined {
   if (category === 'GRABACION') {
     if (key === 'HORA_INICIO') return 'Opcional';
@@ -76,9 +76,8 @@ function rowsFromEvents(events: CalendarEvent[]): Row[] {
   });
 }
 
-/** Clase de color de la fila (t-…): igual que en el calendario; TRABAJO usa el color de 'ENTREGA'. */
-const categoryOf = (type: string) =>
-  type === 'TRABAJO' ? 'ENTREGA' : isKnownType(type) ? type : '';
+/** Clase de color de la fila (t-…): igual que en el calendario. */
+const categoryOf = (type: string) => (isKnownType(type) ? type : '');
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 

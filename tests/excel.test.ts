@@ -71,7 +71,7 @@ test('encabezados: tolera tildes, espacios y guiones', () => {
 test('validación: archivo correcto produce filas normalizadas', () => {
   const r = validateRows([
     row(2, { TIPO: 'clase', NOMBRE: 'Matemáticas', FECHA: '05/10/2026', HORA_INICIO: '08:00', HORA_FIN: '10:00', LINK: 'https://meet.google.com/x' }),
-    row(3, { ID_EVENTO: 'EVT-0002', TIPO: 'TRABAJO', NOMBRE: 'Taller 2', FECHA: '06/10/2026', HORA_INICIO: '23:59' }),
+    row(3, { ID_EVENTO: 'EVT-0002', TIPO: 'ENTREGA', NOMBRE: 'Taller 2', FECHA: '06/10/2026', HORA_INICIO: '23:59' }),
     row(4, { TIPO: 'Sesión', NOMBRE: 'Tutoría', FECHA: '10/10/2026', HORA_INICIO: '10:00' }),
     row(5, {}), // fila vacía: se ignora
     row(6, { TIPO: 'CUESTIONARIO', NOMBRE: 'Informe', FECHA: '08/10/2026' })
@@ -99,7 +99,7 @@ test('validación: los errores del documento de requisitos se detectan con fila 
     row(19, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'E', FECHA: '05/10/2026' }),
     row(21, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'F', FECHA: '05/10/2026', HORA_INICIO: '09:00', HORA_FIN: '07:00' }),
     row(22, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'G', FECHA: '05/10/2026', HORA_INICIO: '09:00', LINK: 'meet.google.com/x' }),
-    row(23, { TIPO: 'TRABAJO', FECHA: '05/10/2026' })
+    row(23, { TIPO: 'ENTREGA', FECHA: '05/10/2026' })
   ], TODAY);
   const at = (rowN: number, col: string) => r.errors.some((e) => e.row === rowN && e.column === col);
   assert.ok(at(8, 'FECHA'), 'fecha inválida');
@@ -121,7 +121,7 @@ test('validación: archivo vacío es un error (no puede borrar el calendario)', 
 
 test('validación: advierte fechas pasadas', () => {
   const r = validateRows([
-    row(2, { TIPO: 'TRABAJO', NOMBRE: 'Taller 1', FECHA: '30/09/2026', HORA_INICIO: '23:59' })
+    row(2, { TIPO: 'ENTREGA', NOMBRE: 'Taller 1', FECHA: '30/09/2026', HORA_INICIO: '23:59' })
   ], TODAY);
   assert.equal(r.errors.length, 0);
   assert.ok(r.warnings.some((w) => w.row === 2 && w.message.includes('fecha pasada')));
@@ -131,7 +131,7 @@ test('duplicados: mismo tipo, nombre, fecha y hora bloquean el guardado', () => 
   const r = validateRows([
     row(2, { TIPO: 'CLASE', NOMBRE: 'Matemáticas II', FECHA: '05/10/2026', HORA_INICIO: '08:00' }),
     row(3, { TIPO: 'sesion', NOMBRE: '  matematicas   ii ', FECHA: '5/10/2026', HORA_INICIO: '8:00 AM' }), // CLASE (nombre antiguo) y SESION = mismo tipo; sin tildes/mayúsculas/espacios
-    row(4, { TIPO: 'TRABAJO', NOMBRE: 'Informe', FECHA: '08/10/2026' }),
+    row(4, { TIPO: 'ENTREGA', NOMBRE: 'Informe', FECHA: '08/10/2026' }),
     row(5, { TIPO: 'trabajo', NOMBRE: 'INFORME', FECHA: '08/10/2026' }) // ambos sin hora
   ], TODAY);
   const dup = r.errors.filter((e) => e.message.startsWith('Evento duplicado'));
@@ -147,8 +147,8 @@ test('duplicados: no son duplicados si cambia el tipo, la hora o la fecha', () =
     row(3, { TIPO: 'CUESTIONARIO', NOMBRE: 'Proyecto', FECHA: '05/10/2026', HORA_INICIO: '08:00' }), // otro tipo
     row(4, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'Proyecto', FECHA: '05/10/2026', HORA_INICIO: '14:00' }), // otra hora
     row(5, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'Proyecto', FECHA: '12/10/2026', HORA_INICIO: '08:00' }), // otra fecha
-    row(6, { TIPO: 'TRABAJO', NOMBRE: 'Taller', FECHA: '06/10/2026' }),
-    row(7, { TIPO: 'TRABAJO', NOMBRE: 'Taller', FECHA: '06/10/2026', HORA_INICIO: '18:00' }) // sin hora ≠ 18:00
+    row(6, { TIPO: 'ENTREGA', NOMBRE: 'Taller', FECHA: '06/10/2026' }),
+    row(7, { TIPO: 'ENTREGA', NOMBRE: 'Taller', FECHA: '06/10/2026', HORA_INICIO: '18:00' }) // sin hora ≠ 18:00
   ], TODAY);
   assert.equal(r.errors.length, 0);
   assert.equal(r.rows.length, 6);
@@ -186,12 +186,12 @@ test('próximas actividades: orden real, máximo 5, sin vencidas (reglas D1 y D6
   const list = [
     ev({ event_id: 'manana-8am', event_date: '2026-10-06', start_time: '08:00' }),
     ev({ event_id: 'hoy-4pm', event_date: '2026-10-05', start_time: '16:00' }),
-    ev({ event_id: 'entrega-hoy-1159', category: 'ENTREGA', type_label: 'TRABAJO', event_date: '2026-10-05', start_time: '23:59' }),
+    ev({ event_id: 'entrega-hoy-1159', category: 'ENTREGA', type_label: 'ENTREGA', event_date: '2026-10-05', start_time: '23:59' }),
     ev({ event_id: 'entrega-hoy-sin-hora', category: 'ENTREGA', type_label: 'CUESTIONARIO', event_date: '2026-10-05' }),
     ev({ event_id: 'en-curso', event_date: '2026-10-05', start_time: '14:00', end_time: '16:00' }),
     ev({ event_id: 'terminada', event_date: '2026-10-05', start_time: '13:00', end_time: '14:30' }),
     ev({ event_id: 'sin-fin-hace-2h', event_date: '2026-10-05', start_time: '13:00' }),
-    ev({ event_id: 'vencida', category: 'ENTREGA', type_label: 'TRABAJO', event_date: '2026-10-04', start_time: '23:59' }),
+    ev({ event_id: 'vencida', category: 'ENTREGA', type_label: 'ENTREGA', event_date: '2026-10-04', start_time: '23:59' }),
     ev({ event_id: 'lejana', event_date: '2026-10-20', start_time: '08:00' })
   ];
   const ids = upcoming(list, now).map((e) => e.event_id);
@@ -202,9 +202,9 @@ test('próximas actividades: orden real, máximo 5, sin vencidas (reglas D1 y D6
 test('estado de entregas: vence pronto (<48 h) y vencido', () => {
   const now = { date: '2026-10-05', time: '10:00' };
   const nowMs = keyToMs('2026-10-05T10:00');
-  const pronto = ev({ category: 'ENTREGA', type_label: 'TRABAJO', event_date: '2026-10-06', start_time: '08:00' });
-  const lejos = ev({ category: 'ENTREGA', type_label: 'TRABAJO', event_date: '2026-10-10', start_time: '08:00' });
-  const pasada = ev({ category: 'ENTREGA', type_label: 'TRABAJO', event_date: '2026-10-04' });
+  const pronto = ev({ category: 'ENTREGA', type_label: 'ENTREGA', event_date: '2026-10-06', start_time: '08:00' });
+  const lejos = ev({ category: 'ENTREGA', type_label: 'ENTREGA', event_date: '2026-10-10', start_time: '08:00' });
+  const pasada = ev({ category: 'ENTREGA', type_label: 'ENTREGA', event_date: '2026-10-04' });
   assert.equal(deliveryStatus(pronto, now, nowMs).status, 'pronto');
   assert.equal(deliveryStatus(lejos, now, nowMs).status, 'pendiente');
   assert.equal(deliveryStatus(pasada, now, nowMs).status, 'vencido');
@@ -219,7 +219,7 @@ test('formato de hora para la interfaz', () => {
 test('FORO: se acepta, la hora es opcional (límite 11:59 PM) y es un tipo distinto para duplicados', () => {
   const r = validateRows([
     row(2, { TIPO: 'foro', NOMBRE: 'Foro unidad 2', FECHA: '07/10/2026', LINK: 'https://campus.edu.co/foro/2' }),
-    row(3, { TIPO: 'TRABAJO', NOMBRE: 'Foro unidad 2', FECHA: '07/10/2026' }), // mismo nombre, otro tipo → no es duplicado
+    row(3, { TIPO: 'ENTREGA', NOMBRE: 'Foro unidad 2', FECHA: '07/10/2026' }), // mismo nombre, otro tipo → no es duplicado
     row(4, { TIPO: 'FORO', NOMBRE: 'Debate final', FECHA: '09/10/2026', HORA_INICIO: '18:00', HORA_FIN: '19:00' })
   ], TODAY);
   assert.equal(r.errors.length, 0);
@@ -241,7 +241,7 @@ test('FORO: se ve como foro pero vence como una entrega', () => {
   const now = { date: '2026-10-07', time: '10:00' };
   const foro = ev({ event_id: 'f', category: 'ENTREGA', type_label: 'FORO', event_date: '2026-10-07' });
   assert.equal(kindOf(foro), 'FORO');
-  assert.equal(kindOf(ev({ category: 'ENTREGA', type_label: 'TRABAJO' })), 'ENTREGA');
+  assert.equal(kindOf(ev({ category: 'ENTREGA', type_label: 'ENTREGA' })), 'ENTREGA');
   assert.equal(kindOf(ev({})), 'SESION_ZAJUNA');
   assert.equal(kindName(foro), 'Foro');
   assert.equal(deliveryStatus(foro, now, keyToMs('2026-10-07T10:00')).status, 'pronto');
@@ -249,27 +249,29 @@ test('FORO: se ve como foro pero vence como una entrega', () => {
   assert.equal(upcoming([foro], { date: '2026-10-08', time: '00:00' }).length, 0, 'vencido a las 11:59 PM');
 });
 
-test('CUESTIONARIO: reemplaza a ENTREGA, es un tipo propio y vence como un trabajo', () => {
+test('ENTREGA reemplaza a TRABAJO; CUESTIONARIO es un tipo propio que vence igual', () => {
   const r = validateRows([
     row(2, { TIPO: 'cuestionario', NOMBRE: 'Quiz unidad 2', FECHA: '08/10/2026', LINK: 'https://campus.edu.co/quiz/2' }),
-    row(3, { TIPO: 'Entrega', NOMBRE: 'Parcial 1', FECHA: '09/10/2026', HORA_INICIO: '20:00' }), // nombre antiguo
-    row(4, { TIPO: 'TRABAJO', NOMBRE: 'Quiz unidad 2', FECHA: '08/10/2026' }) // mismo nombre, otro tipo
+    row(3, { TIPO: 'Trabajo', NOMBRE: 'Taller 3', FECHA: '09/10/2026', HORA_INICIO: '20:00' }), // nombre antiguo
+    row(4, { TIPO: 'Entrega', NOMBRE: 'Quiz unidad 2', FECHA: '08/10/2026' }) // mismo nombre, otro tipo
   ], TODAY);
   assert.equal(r.errors.length, 0);
-  assert.deepEqual(r.rows.map((x) => x.type_label), ['CUESTIONARIO', 'CUESTIONARIO', 'TRABAJO']);
-  assert.ok(r.warnings.some((w) => w.row === 3 && w.column === 'TIPO' && /ahora se llama CUESTIONARIO/.test(w.message)));
+  assert.deepEqual(r.rows.map((x) => x.type_label), ['CUESTIONARIO', 'ENTREGA', 'ENTREGA']);
+  assert.ok(r.warnings.some((w) => w.row === 3 && w.column === 'TIPO' && /ahora se llama ENTREGA/.test(w.message)));
+  assert.ok(!r.warnings.some((w) => w.row === 4 && w.column === 'TIPO'), 'ENTREGA es el nombre oficial: sin aviso');
 
   const dup = validateRows([
-    row(2, { TIPO: 'CUESTIONARIO', NOMBRE: 'Parcial', FECHA: '09/10/2026' }),
-    row(3, { TIPO: 'ENTREGA', NOMBRE: 'parcial', FECHA: '09/10/2026' })
+    row(2, { TIPO: 'ENTREGA', NOMBRE: 'Informe', FECHA: '09/10/2026' }),
+    row(3, { TIPO: 'ENTREGA', NOMBRE: 'informe', FECHA: '09/10/2026' })
   ], TODAY);
   assert.equal(dup.errors.length, 1);
-  assert.match(dup.errors[0].message, /un cuestionario/);
+  assert.match(dup.errors[0].message, /una entrega/);
 
   const quiz = ev({ category: 'ENTREGA', type_label: 'CUESTIONARIO', event_date: '2026-10-08' });
-  assert.equal(kindOf(quiz), 'CUESTIONARIO');
-  assert.equal(kindName(quiz), 'Cuestionario');
-  assert.equal(kindOf(ev({ category: 'ENTREGA', type_label: 'ENTREGA' as never })), 'CUESTIONARIO', 'datos antiguos se ven como cuestionario');
+  const entrega = ev({ category: 'ENTREGA', type_label: 'ENTREGA', event_date: '2026-10-08' });
+  assert.deepEqual([kindOf(quiz), kindName(quiz)], ['CUESTIONARIO', 'Cuestionario']);
+  assert.deepEqual([kindOf(entrega), kindName(entrega)], ['ENTREGA', 'Entrega']);
+  assert.equal(kindName(ev({ category: 'ENTREGA', type_label: 'TRABAJO' as never })), 'Entrega', 'datos antiguos se ven como entrega');
   assert.equal(upcoming([quiz], { date: '2026-10-08', time: '23:58' }).length, 1);
   assert.equal(upcoming([quiz], { date: '2026-10-09', time: '00:00' }).length, 0);
 });

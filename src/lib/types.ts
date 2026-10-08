@@ -3,19 +3,19 @@
  * · GRABACION: material disponible desde una fecha · ENTREGA: con fecha límite.
  */
 export type Category = 'SESION' | 'GRABACION' | 'ENTREGA';
-export type TypeLabel = 'SESION_ZAJUNA' | 'SESION_ADICIONAL' | 'DUDAS' | 'GRABACION' | 'TRABAJO' | 'CUESTIONARIO' | 'FORO';
+export type TypeLabel = 'SESION_ZAJUNA' | 'SESION_ADICIONAL' | 'DUDAS' | 'GRABACION' | 'ENTREGA' | 'CUESTIONARIO' | 'FORO';
 
-export const TYPE_LABELS: readonly TypeLabel[] = ['SESION_ZAJUNA', 'SESION_ADICIONAL', 'DUDAS', 'GRABACION', 'TRABAJO', 'CUESTIONARIO', 'FORO'];
+export const TYPE_LABELS: readonly TypeLabel[] = ['SESION_ZAJUNA', 'SESION_ADICIONAL', 'DUDAS', 'GRABACION', 'ENTREGA', 'CUESTIONARIO', 'FORO'];
 
 /** Tipos que se guardan con categoría SESION (en vivo, hora de inicio obligatoria). */
 export const SESSION_TYPES: readonly TypeLabel[] = ['SESION_ZAJUNA', 'SESION_ADICIONAL', 'DUDAS'];
 
-/** Texto para mensajes: «SESION_ZAJUNA, SESION_ADICIONAL, DUDAS, GRABACION, TRABAJO, CUESTIONARIO o FORO». */
+/** Texto para mensajes: «SESION_ZAJUNA, SESION_ADICIONAL, DUDAS, GRABACION, ENTREGA, CUESTIONARIO o FORO». */
 export const TYPE_LIST_TEXT = `${TYPE_LABELS.slice(0, -1).join(', ')} o ${TYPE_LABELS[TYPE_LABELS.length - 1]}`;
 
 /**
  * Nombres antiguos o abreviados que se siguen aceptando (Excel o respaldos viejos) y se guardan
- * con el nombre oficial, con aviso: SESION y CLASE → SESION_ZAJUNA, ENTREGA → CUESTIONARIO.
+ * con el nombre oficial, con aviso: SESION y CLASE → SESION_ZAJUNA, TRABAJO → ENTREGA.
  */
 export const TYPE_ALIASES: Readonly<Record<string, TypeLabel>> = {
   SESION: 'SESION_ZAJUNA',
@@ -24,7 +24,9 @@ export const TYPE_ALIASES: Readonly<Record<string, TypeLabel>> = {
   ADICIONAL: 'SESION_ADICIONAL',
   SESION_ADICIONALES: 'SESION_ADICIONAL',
   DUDA: 'DUDAS',
-  ENTREGA: 'CUESTIONARIO'
+  TRABAJO: 'ENTREGA',
+  TRABAJOS: 'ENTREGA',
+  ENTREGAS: 'ENTREGA'
 };
 
 const stripAccents = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -44,9 +46,8 @@ export function resolveType(value: string): { key: string; label: TypeLabel | nu
 }
 
 /**
- * Cómo se ve un evento. Trabajos, cuestionarios y foros se guardan con categoría ENTREGA
+ * Cómo se ve un evento. Entregas, cuestionarios y foros se guardan con categoría ENTREGA
  * (tienen fecha límite), pero cada uno tiene color, ícono y filtro propios.
- * 'ENTREGA' aquí significa «Trabajo».
  */
 export type Kind = 'SESION_ZAJUNA' | 'SESION_ADICIONAL' | 'DUDAS' | 'GRABACION' | 'ENTREGA' | 'CUESTIONARIO' | 'FORO';
 

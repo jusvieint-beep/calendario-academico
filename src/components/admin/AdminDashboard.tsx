@@ -48,7 +48,7 @@ export default function AdminDashboard({ adminName, events, imports, version, se
           <span className="stat-sub">Desde hoy · {futureCount('SESION_ZAJUNA')} Zajuna · {futureCount('SESION_ADICIONAL')} adicionales · {futureCount('DUDAS')} de dudas</span>
         </div>
         <div className="stat">
-          <span className="stat-label"><i style={{ background: 'var(--ent)' }} />Trabajos, cuestionarios y foros</span>
+          <span className="stat-label"><i style={{ background: 'var(--ent)' }} />Entregas, cuestionarios y foros</span>
           <span className="stat-num">{future.filter((e) => e.category === 'ENTREGA').length}</span>
           <span className="stat-sub">Sin vencer · {events.filter((e) => e.category === 'ENTREGA').length} en total</span>
         </div>

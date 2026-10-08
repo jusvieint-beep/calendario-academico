@@ -43,7 +43,7 @@ test('pegar con encabezados: ubica cada columna por su nombre aunque cambie el o
 });
 
 test('pegar sin encabezados: 8 columnas empiezan en ID; menos empiezan en TIPO', () => {
-  const full = matrixToCells([['EVT-9', 'TRABAJO', 'Taller', '06/10/2026', '23:59', '', '', 'PDF']]);
+  const full = matrixToCells([['EVT-9', 'ENTREGA', 'Taller', '06/10/2026', '23:59', '', '', 'PDF']]);
   assert.equal(full[0].ID_EVENTO, 'EVT-9');
   assert.equal(full[0].DESCRIPCION, 'PDF');
   const short = matrixToCells([['Sesión', 'Tutoría', '10/10/2026', '10:00', '12:00']]);
@@ -60,9 +60,9 @@ test('pegar dentro de la tabla: escribe desde la celda elegida, agrega filas y p
   assert.equal(res.added, 1);
   assert.equal(res.touched, 3);
   assert.equal(res.rows[0].ID_EVENTO, 'EVT-0001', 'el ID publicado no se sobrescribe');
-  assert.equal(res.rows[0].TIPO, 'TRABAJO');
+  assert.equal(res.rows[0].TIPO, 'ENTREGA', 'el nombre antiguo TRABAJO se convierte al pegar');
   assert.equal(res.rows[1].ID_EVENTO, 'EVT-Y', 'en filas nuevas sí se puede pegar ID');
-  assert.equal(res.rows[1].TIPO, 'CUESTIONARIO', 'el nombre antiguo ENTREGA se convierte al pegar');
+  assert.equal(res.rows[1].TIPO, 'ENTREGA');
   assert.equal(res.rows[2].NOMBRE, 'D');
   assert.equal(res.rows[2].TIPO, 'SESION_ZAJUNA', 'el nombre antiguo CLASE se convierte al pegar');
   assert.equal(base[0].TIPO, 'SESION_ZAJUNA', 'no modifica la tabla original');
@@ -94,7 +94,7 @@ test('servidor: las filas del editor se validan igual que un Excel, numeradas co
   const ok = checkGridRows([
     cells({ TIPO: 'SESION_ZAJUNA', NOMBRE: 'Matemáticas', FECHA: '05/10/2026', HORA_INICIO: '08:00', HORA_FIN: '10:00', LINK: 'https://meet.google.com/x' }),
     cells({}), // fila vacía: se ignora
-    cells({ ID_EVENTO: 'EVT-0002', TIPO: 'TRABAJO', NOMBRE: 'Taller 2', FECHA: '06/10/2026' })
+    cells({ ID_EVENTO: 'EVT-0002', TIPO: 'ENTREGA', NOMBRE: 'Taller 2', FECHA: '06/10/2026' })
   ]);
   assert.equal(ok.ok, true);
   if (ok.ok) {

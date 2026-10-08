@@ -201,7 +201,7 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
     ['SESION_ADICIONAL', 'Sesiones adicionales', 'var(--adi)', 'var(--adi-soft)'],
     ['DUDAS', 'Dudas', 'var(--dud)', 'var(--dud-soft)'],
     ['GRABACION', 'Grabaciones', 'var(--rec)', 'var(--rec-soft)'],
-    ['ENTREGA', 'Trabajos', 'var(--ent)', 'var(--ent-soft)'],
+    ['ENTREGA', 'Entregas', 'var(--ent)', 'var(--ent-soft)'],
     ['CUESTIONARIO', 'Cuestionarios', 'var(--quiz)', 'var(--quiz-soft)'],
     ['FORO', 'Foros', 'var(--foro)', 'var(--foro-soft)']
   ];
@@ -279,7 +279,7 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
             <span><i style={{ background: 'var(--adi)' }} />Sesión adicional</span>
             <span><i style={{ background: 'var(--dud)' }} />Dudas</span>
             <span><i style={{ background: 'var(--rec)' }} />Grabación</span>
-            <span><i style={{ background: 'var(--ent)' }} />Trabajo</span>
+            <span><i style={{ background: 'var(--ent)' }} />Entrega</span>
             <span><i style={{ background: 'var(--quiz)' }} />Cuestionario</span>
             <span><i style={{ background: 'var(--foro)' }} />Foro</span>
           </div>
