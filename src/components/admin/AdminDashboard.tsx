@@ -7,6 +7,7 @@ import { compareEvents, isPast, kindOf, whenText } from '@/lib/events';
 import GridEditor from './GridEditor';
 import ImportWizard from './ImportWizard';
 import HistoryPanel from './HistoryPanel';
+import WhatsAppPanel from './WhatsAppPanel';
 
 interface Props {
   adminName: string;
@@ -90,6 +91,8 @@ export default function AdminDashboard({ adminName, events, imports, version, se
       </div>
 
       <HistoryPanel imports={imports} version={version} />
+
+      <WhatsAppPanel />
     </div>
   );
 }

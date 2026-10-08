@@ -377,3 +377,25 @@ table.sheet { width: 100%; min-width: 1120px; border-collapse: separate; border-
 
 /* Acceso discreto al panel desde la página pública */
 .admin-link { font-size: 12px; padding-inline: 10px; }
+
+/* Recordatorio por WhatsApp (/admin) */
+.wa-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.wa-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; }
+.wa-form { display: flex; flex-direction: column; gap: 14px; }
+.wa-select { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 11px; color: var(--text); font: inherit; font-size: 13px; width: 100%; }
+.wa-select:focus { border-color: var(--accent); outline: none; }
+.wa-check { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.wa-check input { width: 17px; height: 17px; accent-color: var(--accent); }
+.wa-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.link-btn { background: none; border: none; padding: 0; color: var(--ses); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; text-align: left; align-self: flex-start; }
+.link-btn:hover { text-decoration: underline; }
+.wa-help { margin: 2px 0 0; padding: 10px 12px 10px 30px; background: var(--surface-2); border-radius: 8px; font-size: 12.5px; line-height: 1.6; color: var(--text-dim); }
+.wa-help b { color: var(--text); }
+.wa-help code { background: var(--bg); padding: 1px 5px; border-radius: 4px; font-size: 12px; color: var(--text); }
+.wa-side { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.wa-bubble { background: #dcf8c6; color: #111b21; border-radius: 10px 10px 10px 2px; padding: 10px 12px; font-size: 13px; line-height: 1.5; max-width: 420px; box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15); overflow-wrap: anywhere; }
+.wa-bubble .stat-sub { color: #3b4a54; }
+.wa-log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.wa-log li { display: flex; gap: 10px; align-items: flex-start; font-size: 12.5px; }
+.wa-log li > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+@media (max-width: 760px) { .wa-grid { grid-template-columns: minmax(0, 1fr); } }

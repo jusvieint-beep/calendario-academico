@@ -161,6 +161,21 @@ Atajos: Enter baja a la fila siguiente (y crea una al final), Shift+Enter sube, 
 
 Si te equivocas, en **Historial de importaciones** pulsa **Deshacer** en esa actualización. La restauración también queda registrada y se puede deshacer.
 
+## Recordatorio diario por WhatsApp (solo administrador)
+
+Panel `/admin` → **Recordatorio por WhatsApp**. Usa la API gratuita de CallMeBot, que es **solo para uso personal**: envía mensajes únicamente al número que la autorizó. No sirve para avisar a estudiantes.
+
+1. Guarda en tus contactos **+34 623 91 22 04** y envíale por WhatsApp: `I allow callmebot to send me messages`.
+2. Copia la *apikey* que te responde en el panel, revisa tu número y la hora (por defecto 8:00 PM), marca «Enviarme el resumen todos los días» y pulsa **Guardar**.
+3. Pulsa **Enviar prueba**.
+
+Cómo funciona (`supabase/migrations/0002_whatsapp_recordatorios.sql`):
+
+- `pg_cron` ejecuta `run_daily_digest()` cada hora; a la hora elegida arma el resumen de **mañana** (sesiones Zajuna, adicionales, dudas, entregas, cuestionarios y foros; sin grabaciones) y lo envía con la extensión `http`.
+- Si mañana no hay actividades, no se envía nada. Nunca se envía dos veces para el mismo día.
+- La clave se guarda cifrada en **Supabase Vault** (`callmebot_apikey`). Las tablas `notify_settings` y `notification_log` no son accesibles desde el navegador; solo las funciones `notify_*`, que verifican `is_admin()`.
+- La bitácora (últimos envíos, errores de CallMeBot) se ve en el mismo panel. Máximo 5 pruebas por hora.
+
 ## 8. Desarrollo local (opcional)
 
 Requiere Node.js 20 o superior.
