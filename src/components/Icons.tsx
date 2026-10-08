@@ -1,4 +1,5 @@
 import type { SVGProps } from 'react';
+import type { Kind } from '@/lib/types';
 
 type P = SVGProps<SVGSVGElement>;
 const base = { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true };
@@ -43,13 +44,20 @@ export const RecordingIcon = (p: P) => (
   <svg {...base} {...p}><rect x="2.5" y="4.5" width="19" height="13" rx="2.5" /><path d="M10 8.3v5.4l4.6-2.7z" /><path d="M8 21h8" /></svg>
 );
 
+/** Dudas: globo de chat con signo de pregunta. */
+export const DoubtsIcon = (p: P) => (
+  <svg {...base} {...p}><path d="M20.5 11.5a8 8 0 0 1-11.6 7.1L3.5 20l1.4-4.6A8 8 0 1 1 20.5 11.5z" /><path d="M10.1 9.3a2.3 2.3 0 0 1 4.4.9c0 1.5-2.2 2-2.2 3.1" /><path d="M12.3 15.8h.01" /></svg>
+);
+
 /** Cuestionario: hoja de examen con respuestas marcadas. */
 export const QuizIcon = (p: P) => (
   <svg {...base} {...p}><rect x="5" y="3.5" width="14" height="18" rx="2.5" /><path d="M9.5 2.5h5v2.5h-5z" /><path d="M8.5 10l1.2 1.2 2.1-2.4" /><path d="M14 10h2" /><path d="M8.5 15.5l1.2 1.2 2.1-2.4" /><path d="M14 15.5h2" /></svg>
 );
 
-export const CategoryIcon = ({ category, ...p }: P & { category: 'SESION' | 'GRABACION' | 'ENTREGA' | 'CUESTIONARIO' | 'FORO' }) =>
-  category === 'SESION' ? <SessionIcon {...p} />
+/** Sesión Zajuna y Sesión adicional comparten la cámara (son sesiones); el color las diferencia. */
+export const CategoryIcon = ({ category, ...p }: P & { category: Kind }) =>
+  category === 'SESION_ZAJUNA' || category === 'SESION_ADICIONAL' ? <SessionIcon {...p} />
+  : category === 'DUDAS' ? <DoubtsIcon {...p} />
   : category === 'GRABACION' ? <RecordingIcon {...p} />
   : category === 'FORO' ? <ForumIcon {...p} />
   : category === 'CUESTIONARIO' ? <QuizIcon {...p} />

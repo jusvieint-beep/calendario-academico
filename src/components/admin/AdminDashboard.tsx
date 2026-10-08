@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { CalendarEvent, ImportRecord } from '@/lib/types';
 import { formatInstant, nowInBogota, type NowCol } from '@/lib/dates';
-import { compareEvents, isPast, whenText } from '@/lib/events';
+import { compareEvents, isPast, kindOf, whenText } from '@/lib/events';
 import GridEditor from './GridEditor';
 import ImportWizard from './ImportWizard';
 import HistoryPanel from './HistoryPanel';
@@ -28,7 +28,9 @@ export default function AdminDashboard({ adminName, events, imports, version, se
   }, []);
 
   const future = useMemo(() => [...events].sort(compareEvents).filter((e) => !isPast(e, now)), [events, now]);
-  const nextSession = future.find((e) => e.category === 'SESION');
+  const isClass = (e: CalendarEvent) => kindOf(e) === 'SESION_ZAJUNA' || kindOf(e) === 'SESION_ADICIONAL';
+  const nextSession = future.find(isClass);
+  const futureCount = (k: string) => future.filter((e) => kindOf(e) === k).length;
   const nextDelivery = future.find((e) => e.category === 'ENTREGA');
   const lastApplied = imports.find((i) => i.status === 'applied');
 
@@ -42,8 +44,8 @@ export default function AdminDashboard({ adminName, events, imports, version, se
       <div className="kpis">
         <div className="stat">
           <span className="stat-label"><i style={{ background: 'var(--ses)' }} />Sesiones programadas</span>
-          <span className="stat-num">{future.filter((e) => e.category === 'SESION').length}</span>
-          <span className="stat-sub">Desde hoy · {events.filter((e) => e.category === 'SESION').length} en total</span>
+          <span className="stat-num">{future.filter(isClass).length}</span>
+          <span className="stat-sub">Desde hoy · {futureCount('SESION_ZAJUNA')} Zajuna · {futureCount('SESION_ADICIONAL')} adicionales · {futureCount('DUDAS')} de dudas</span>
         </div>
         <div className="stat">
           <span className="stat-label"><i style={{ background: 'var(--ent)' }} />Trabajos, cuestionarios y foros</span>

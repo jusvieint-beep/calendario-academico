@@ -1,4 +1,4 @@
-import { TYPE_ALIASES, TYPE_LABELS, type ImportRow, type RowIssue, type TypeLabel } from '../types';
+import { SESSION_TYPES, TYPE_LIST_TEXT, resolveType, type ImportRow, type RowIssue, type TypeLabel } from '../types';
 import { formatDateShort } from '../dates';
 import { MAX_ROWS, type ColumnKey } from './columns';
 import { cellToLink, cellToText, displayValue, isEmptyCell, parseDateCell, parseTimeCell } from './normalize';
@@ -61,22 +61,24 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
       }
     }
 
-    // TIPO (los nombres antiguos, como ENTREGA, se aceptan y se guardan con el nombre nuevo)
-    const rawType = stripAccents(cellToText(cells.TIPO)).toUpperCase();
-    const typeText = TYPE_ALIASES[rawType] ?? rawType;
+    // TIPO. Se acepta «Sesión Zajuna», «sesion zajuna» o «SESION_ZAJUNA». Los nombres antiguos
+    // (SESION, CLASE, ENTREGA) se aceptan con aviso y se guardan con el nombre oficial.
+    const typeRaw = cellToText(cells.TIPO);
+    const resolved = resolveType(typeRaw);
     let type: TypeLabel | null = null;
-    if (!typeText) {
-      err(row, 'TIPO', cells.TIPO, 'Falta el tipo de evento.', 'Elige SESION, GRABACION, TRABAJO, CUESTIONARIO o FORO en la lista desplegable.');
-    } else if (!(TYPE_LABELS as readonly string[]).includes(typeText)) {
-      err(row, 'TIPO', cells.TIPO, 'Tipo no reconocido.', 'Elige SESION, GRABACION, TRABAJO, CUESTIONARIO o FORO en la lista desplegable.');
+    if (!resolved.key) {
+      err(row, 'TIPO', cells.TIPO, 'Falta el tipo de evento.', `Elige ${TYPE_LIST_TEXT} en la lista desplegable.`);
+    } else if (!resolved.label) {
+      err(row, 'TIPO', cells.TIPO, 'Tipo no reconocido.', `Elige ${TYPE_LIST_TEXT} en la lista desplegable.`);
     } else {
-      type = typeText as TypeLabel;
-      if (rawType !== typeText) {
-        warn(row, 'TIPO', cells.TIPO, `El tipo «${rawType}» ahora se llama ${type}. Se guardará como ${type}.`, `Escribe ${type} en la columna TIPO.`);
+      type = resolved.label;
+      if (resolved.aliased) {
+        warn(row, 'TIPO', cells.TIPO, `El tipo «${typeRaw.trim()}» ahora se llama ${type}. Se guardará como ${type}.`, `Escribe ${type} en la columna TIPO.`);
       }
     }
-    const isSession = type === 'SESION';
+    const isSession = type !== null && SESSION_TYPES.includes(type);
     const isRecording = type === 'GRABACION';
+    const isDoubts = type === 'DUDAS';
 
     // NOMBRE
     const title = cellToText(cells.NOMBRE).replace(/\s+/g, ' ');
@@ -105,7 +107,7 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
     else end = endParsed.value;
 
     if (isSession && startParsed.ok && !start) {
-      err(row, 'HORA_INICIO', cells.HORA_INICIO, 'Las sesiones necesitan hora de inicio.', 'Escribe la hora de inicio, por ejemplo 08:00.');
+      err(row, 'HORA_INICIO', cells.HORA_INICIO, isDoubts ? 'Los espacios de dudas necesitan hora de inicio.' : 'Las sesiones necesitan hora de inicio.', 'Escribe la hora de inicio, por ejemplo 08:00.');
     }
     if (type && !isSession && end) {
       // Grabaciones, trabajos, cuestionarios y foros no usan hora de fin.
@@ -127,6 +129,8 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
         valid = false;
       }
       if (!valid) err(row, 'LINK', cells.LINK, 'El enlace no tiene un formato válido.', 'Copia el enlace completo, empezando por https://');
+    } else if (isDoubts) {
+      warn(row, 'LINK', '', `El espacio de dudas «${title || 'Sin nombre'}» no tiene enlace al chat. Se publicará sin botón «Ir al chat de dudas»; agrégalo cuando lo tengas.`);
     } else if (isSession) {
       warn(row, 'LINK', '', `«${title || 'Sin nombre'}» no tiene enlace. Se publicará sin botón «Ingresar».`);
     } else if (isRecording) {
@@ -145,7 +149,7 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
       warn(row, 'FECHA', cells.FECHA, `«${title}» tiene fecha pasada (${formatDateShort(date)}). Se mostrará como finalizada o vencida.`);
     }
 
-    // Duplicados: mismo tipo (sesión, grabación, trabajo, cuestionario o foro), nombre, fecha y hora → error, no se guarda.
+    // Duplicados: mismo tipo (sesión Zajuna, sesión adicional, dudas, grabación, trabajo, cuestionario o foro), nombre, fecha y hora → error, no se guarda.
     // El nombre se compara sin mayúsculas, tildes ni espacios repetidos.
     const signature = [
       type === 'TRABAJO' || !type ? 'TRABAJO' : type,
@@ -157,7 +161,7 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
     if (firstRow !== undefined) {
       err(
         row, 'NOMBRE', title,
-        `Evento duplicado: la fila ${firstRow} ya tiene ${isSession ? 'una sesión' : isRecording ? 'una grabación' : type === 'FORO' ? 'un foro' : type === 'CUESTIONARIO' ? 'un cuestionario' : 'un trabajo'} «${title}» el ${formatDateShort(date)}${start ? ` a las ${start}` : ' sin hora'}.`,
+        `Evento duplicado: la fila ${firstRow} ya tiene ${type === 'SESION_ZAJUNA' ? 'una sesión Zajuna' : type === 'SESION_ADICIONAL' ? 'una sesión adicional' : isDoubts ? 'un espacio de dudas' : isRecording ? 'una grabación' : type === 'FORO' ? 'un foro' : type === 'CUESTIONARIO' ? 'un cuestionario' : 'un trabajo'} «${title}» el ${formatDateShort(date)}${start ? ` a las ${start}` : ' sin hora'}.`,
         'Elimina una de las dos filas. Si son eventos distintos, cambia el nombre o la hora.'
       );
       continue;

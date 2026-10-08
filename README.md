@@ -37,10 +37,10 @@ Para la **primera carga**, deja ID_EVENTO vacío en todas las filas: la app asig
 | Columna | Obligatoria | Formato | Ejemplo |
 |---|---|---|---|
 | ID_EVENTO | No | Texto único. Vacío en filas nuevas: la app asigna `EVT-0001`… | EVT-0001 |
-| TIPO | Sí | SESION, GRABACION, TRABAJO, CUESTIONARIO o FORO | SESION |
+| TIPO | Sí | SESION_ZAJUNA, SESION_ADICIONAL, DUDAS, GRABACION, TRABAJO, CUESTIONARIO o FORO | SESION_ZAJUNA |
 | NOMBRE | Sí | Texto, máx. 150 caracteres | Matemáticas II |
 | FECHA | Sí | dd/mm/aaaa | 05/10/2026 |
-| HORA_INICIO | Solo sesiones | hh:mm en 24 h. En grabaciones es la hora desde la que está disponible (opcional). En trabajos, cuestionarios y foros es la hora límite; vacía = 11:59 PM | 08:00 |
+| HORA_INICIO | Sesiones y dudas | hh:mm en 24 h. En grabaciones es la hora desde la que está disponible (opcional). En trabajos, cuestionarios y foros es la hora límite; vacía = 11:59 PM | 08:00 |
 | HORA_FIN | No | hh:mm, posterior al inicio | 10:00 |
 | LINK | No | Empieza por https:// | https://meet.google.com/… |
 | DESCRIPCION | No | Texto, máx. 2.000 caracteres | Traer calculadora |
@@ -248,7 +248,7 @@ Fechas y horas se guardan tal como vienen del Excel, en hora local de Colombia (
 
 - Trabajo sin hora: vence a las 11:59 PM. Sesión: hora de inicio obligatoria.
 - ID_EVENTO vacío: se asigna automáticamente.
-- Tipos: SESION (azul, en vivo, hora de inicio obligatoria, botón «Ingresar a la sesión»). GRABACION (rosa, ícono de pantalla con «play»): material disponible desde una fecha, hora opcional, botón «Ver grabación», no vence y no aparece en «Próximas actividades». CLASE es el nombre antiguo de SESION: se sigue aceptando y se guarda como SESION. TRABAJO (naranja), CUESTIONARIO (verde, ícono de examen) y FORO (violeta) tienen fecha límite: la hora es la hora límite y sin hora vencen a las 11:59 PM, con estados Pendiente / Vence pronto / Vencido. Cuestionarios y foros pueden tener enlace, con botón «Presentar cuestionario» o «Ir al foro». Cada tipo tiene su filtro. ENTREGA es el nombre antiguo de CUESTIONARIO: se sigue aceptando en Excel y respaldos viejos y se guarda como CUESTIONARIO.
+- Tipos en vivo (hora de inicio obligatoria, hora de fin opcional, estado «En curso», aparecen en «Próximas actividades»): SESION_ZAJUNA (azul intenso, etiqueta «Prioritaria», va primero a igual hora), SESION_ADICIONAL (cian) — ambas con el ícono de cámara y botón «Ingresar a la sesión» — y DUDAS (ámbar, globo de chat con «?», espacio para resolver dudas por chat, botón «Ir al chat de dudas» cuando tenga enlace). GRABACION (rosa, ícono de pantalla con «play»): material disponible desde una fecha, hora opcional, botón «Ver grabación», no vence y no aparece en «Próximas actividades». SESION y CLASE son nombres antiguos: se siguen aceptando con aviso y se guardan como SESION_ZAJUNA. En Excel se puede escribir «Sesión Zajuna» o «sesion adicional»: se normaliza al nombre oficial. TRABAJO (naranja), CUESTIONARIO (verde, ícono de examen) y FORO (violeta) tienen fecha límite: la hora es la hora límite y sin hora vencen a las 11:59 PM, con estados Pendiente / Vence pronto / Vencido. Cuestionarios y foros pueden tener enlace, con botón «Presentar cuestionario» o «Ir al foro». Cada tipo tiene su filtro. ENTREGA es el nombre antiguo de CUESTIONARIO: se sigue aceptando en Excel y respaldos viejos y se guarda como CUESTIONARIO.
 - Sesión sin enlace: advertencia, no error.
 - Duplicados: si dos filas tienen el mismo tipo (clase/sesión, trabajo, cuestionario o foro), nombre, fecha y hora, es un error y no se guarda. El nombre se compara sin mayúsculas, tildes ni espacios repetidos. Aplica al editor web y al Excel.
 - Sesión en curso: visible en «Próximas actividades» hasta su hora de fin (o 1 hora después del inicio si no tiene fin).

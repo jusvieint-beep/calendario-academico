@@ -29,13 +29,19 @@ export const isPast = (e: CalendarEvent, now: NowCol) => !isRecording(e) && endK
 export const isLive = (e: CalendarEvent, now: NowCol) =>
   e.category === 'SESION' && startKey(e) <= nowKey(now) && !isPast(e, now);
 
-/** Orden por fecha y hora real; a igual hora, la sesión va primero. */
+/** Orden por fecha y hora real; a igual hora, las sesiones van primero (Zajuna antes que las demás). */
 export function compareEvents(a: CalendarEvent, b: CalendarEvent): number {
   const ka = startKey(a), kb = startKey(b);
   if (ka !== kb) return ka < kb ? -1 : 1;
   if (a.category !== b.category) {
     const order = { SESION: 0, ENTREGA: 1, GRABACION: 2 } as const;
     return order[a.category] - order[b.category];
+  }
+  if (a.category === 'SESION') {
+    // A igual hora: Sesión Zajuna (prioritaria), luego adicional, luego dudas.
+    const rank = { SESION_ZAJUNA: 0, SESION_ADICIONAL: 1, DUDAS: 2 } as Record<string, number>;
+    const d = (rank[kindOf(a)] ?? 0) - (rank[kindOf(b)] ?? 0);
+    if (d) return d;
   }
   return a.title.localeCompare(b.title, 'es');
 }
@@ -46,22 +52,31 @@ export function upcoming(events: CalendarEvent[], now: NowCol, limit = UPCOMING_
 
 export function kindName(e: Pick<CalendarEvent, 'type_label'>): string {
   switch (e.type_label) {
-    case 'SESION': return 'Sesión';
+    case 'SESION_ZAJUNA': return 'Sesión Zajuna';
+    case 'SESION_ADICIONAL': return 'Sesión adicional';
+    case 'DUDAS': return 'Dudas';
     case 'GRABACION': return 'Grabación';
     case 'TRABAJO': return 'Trabajo';
     case 'FORO': return 'Foro';
     case 'CUESTIONARIO': return 'Cuestionario';
     default: {
       const legacy = e.type_label as string;
-      return legacy === 'ENTREGA' ? 'Cuestionario' : legacy === 'CLASE' ? 'Sesión' : 'Trabajo';
+      return legacy === 'ENTREGA' ? 'Cuestionario' : legacy === 'CLASE' || legacy === 'SESION' ? 'Sesión Zajuna' : 'Trabajo';
     }
   }
 }
 
-/** Foro → 'FORO'; Cuestionario → 'CUESTIONARIO'; el resto según su categoría (SESION, GRABACION o 'ENTREGA' = trabajo). */
+/** Sesiones Zajuna son prioritarias; las adicionales y los espacios de dudas son complementarios. */
+export const isPriority = (e: Pick<CalendarEvent, 'category' | 'type_label'>) => kindOf(e) === 'SESION_ZAJUNA';
+
+/**
+ * Foro → 'FORO'; Cuestionario → 'CUESTIONARIO'; sesiones según su tipo (SESION_ZAJUNA, SESION_ADICIONAL, DUDAS;
+ * los nombres antiguos SESION y CLASE cuentan como Zajuna); el resto según su categoría (GRABACION o 'ENTREGA' = trabajo).
+ */
 export const kindOf = (e: Pick<CalendarEvent, 'category' | 'type_label'>): Kind =>
   e.type_label === 'FORO' ? 'FORO'
   : e.type_label === 'CUESTIONARIO' || (e.type_label as string) === 'ENTREGA' ? 'CUESTIONARIO'
+  : e.category === 'SESION' ? (e.type_label === 'SESION_ADICIONAL' || e.type_label === 'DUDAS' ? e.type_label : 'SESION_ZAJUNA')
   : e.category;
 
 export type DeliveryStatus = 'pendiente' | 'pronto' | 'vencido';

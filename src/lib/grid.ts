@@ -8,7 +8,7 @@
 import { COLUMNS, normalizeHeader, type ColumnKey } from './excel/columns';
 import { parseDateCell, parseTimeCell } from './excel/normalize';
 import { addDays, formatDateShort } from './dates';
-import { TYPE_ALIASES, TYPE_LABELS, type CalendarEvent, type TypeLabel } from './types';
+import { TYPE_LABELS, resolveType, type CalendarEvent } from './types';
 
 export type GridCells = Record<ColumnKey, string>;
 
@@ -35,13 +35,9 @@ export const isBlankRow = (c: GridCells) => COLUMN_KEYS.every((k) => c[k].trim()
 
 export const sameCells = (a: GridCells, b: GridCells) => COLUMN_KEYS.every((k) => a[k].trim() === b[k].trim());
 
-const stripAccents = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '');
-
-/** 'sesión', 'Grabación', 'clase', 'Entrega' → 'SESION', 'GRABACION', 'SESION', 'CUESTIONARIO'. Si no es un tipo conocido, devuelve el texto tal cual. */
+/** 'Sesión Zajuna', 'sesion adicional', 'duda', 'Grabación', 'clase', 'Entrega' → tipo oficial. Si no es un tipo conocido, devuelve el texto tal cual. */
 export function normalizeType(value: string): string {
-  const t = stripAccents(value).trim().toUpperCase();
-  if (TYPE_ALIASES[t]) return TYPE_ALIASES[t];
-  return (TYPE_LABELS as readonly string[]).includes(t) ? (t as TypeLabel) : value.trim();
+  return resolveType(value).label ?? value.trim();
 }
 
 export const isKnownType = (value: string) => (TYPE_LABELS as readonly string[]).includes(value);

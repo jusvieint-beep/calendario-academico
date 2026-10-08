@@ -1,5 +1,5 @@
 import ExcelJS from 'exceljs';
-import type { CalendarEvent } from '../types';
+import { TYPE_LABELS, TYPE_LIST_TEXT, type CalendarEvent } from '../types';
 import { COLUMNS, SHEET_NAME, TEMPLATE_ROWS } from './columns';
 
 const FONT = 'Arial';
@@ -70,8 +70,8 @@ export async function buildCalendarWorkbook(events: CalendarEvent[] = []): Promi
     row.getCell(6).numFmt = 'hh:mm';
 
     row.getCell(2).dataValidation = {
-      type: 'list', allowBlank: true, formulae: ['"SESION,GRABACION,TRABAJO,CUESTIONARIO,FORO"'],
-      showErrorMessage: true, errorTitle: 'Tipo no válido', error: 'Usa SESION, GRABACION, TRABAJO, CUESTIONARIO o FORO.',
+      type: 'list', allowBlank: true, formulae: [`"${TYPE_LABELS.join(',')}"`],
+      showErrorMessage: true, errorTitle: 'Tipo no válido', error: `Usa ${TYPE_LIST_TEXT}.`,
       showInputMessage: true, promptTitle: 'TIPO', prompt: COLUMNS[1].hint
     };
     row.getCell(4).dataValidation = {
@@ -109,7 +109,7 @@ export async function buildCalendarWorkbook(events: CalendarEvent[] = []): Promi
     ['• Para editar después, descarga el «Excel actual» desde /admin: ya trae los ID. No reutilices archivos viejos.', 'p'],
     ['• No cambies el nombre de la hoja «Calendario» ni los encabezados de la fila 1.', 'p'],
     ['• Fechas y horas de Colombia (UTC-5). Horas en formato 24 h: 08:00, 14:30, 23:59.', 'p'],
-    ['• SESION necesita HORA_INICIO. GRABACION se muestra desde su fecha (hora opcional). En TRABAJO, CUESTIONARIO y FORO, HORA_INICIO es la hora límite; vacía = 11:59 PM.', 'p'],
+    ['• SESION_ZAJUNA (prioritaria), SESION_ADICIONAL y DUDAS (espacio de dudas por chat) necesitan HORA_INICIO. GRABACION se muestra desde su fecha (hora opcional). En TRABAJO, CUESTIONARIO y FORO, HORA_INICIO es la hora límite; vacía = 11:59 PM.', 'p'],
     ['• Un archivo con errores no modifica nada. La app indica fila, columna y cómo corregir cada error.', 'p']
   ];
   lines.forEach(([text, kind], i) => {

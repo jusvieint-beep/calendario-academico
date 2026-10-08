@@ -9,9 +9,9 @@ import assert from 'node:assert/strict';
 import { parseDateCell, parseTimeCell, cellToLink, cellToText } from '../src/lib/excel/normalize.ts';
 import { validateRows, type RawRow } from '../src/lib/excel/validate.ts';
 import { normalizeHeader } from '../src/lib/excel/columns.ts';
-import { upcoming, isLive, isPast, deliveryStatus, kindOf, kindName } from '../src/lib/events.ts';
+import { upcoming, isLive, isPast, isPriority, compareEvents, deliveryStatus, kindOf, kindName } from '../src/lib/events.ts';
 import { formatTime, keyToMs } from '../src/lib/dates.ts';
-import type { CalendarEvent } from '../src/lib/types.ts';
+import { resolveType, type CalendarEvent } from '../src/lib/types.ts';
 
 const TODAY = '2026-10-03';
 
@@ -79,12 +79,12 @@ test('validación: archivo correcto produce filas normalizadas', () => {
   assert.equal(r.errors.length, 0);
   assert.equal(r.rows.length, 4);
   assert.deepEqual(r.rows[0], {
-    event_id: null, type_label: 'SESION', title: 'Matemáticas', event_date: '2026-10-05',
+    event_id: null, type_label: 'SESION_ZAJUNA', title: 'Matemáticas', event_date: '2026-10-05',
     start_time: '08:00', end_time: '10:00', link: 'https://meet.google.com/x', description: null
   });
   // CLASE es el nombre antiguo de SESION: se acepta y se avisa.
-  assert.ok(r.warnings.some((w) => w.row === 2 && w.column === 'TIPO' && w.message.includes('SESION')));
-  assert.equal(r.rows[2].type_label, 'SESION');
+  assert.ok(r.warnings.some((w) => w.row === 2 && w.column === 'TIPO' && w.message.includes('SESION_ZAJUNA')));
+  assert.equal(r.rows[2].type_label, 'SESION_ZAJUNA');
   assert.equal(r.rows[3].start_time, null); // entrega sin hora: vence 23:59 en la base de datos
   // advertencia: sesión sin enlace (fila 4)
   assert.ok(r.warnings.some((w) => w.row === 4 && w.column === 'LINK'));
@@ -92,13 +92,13 @@ test('validación: archivo correcto produce filas normalizadas', () => {
 
 test('validación: los errores del documento de requisitos se detectan con fila y columna', () => {
   const r = validateRows([
-    row(5, { ID_EVENTO: 'EVT-004', TIPO: 'SESION', NOMBRE: 'A', FECHA: '05/10/2026', HORA_INICIO: '08:00' }),
-    row(8, { TIPO: 'SESION', NOMBRE: 'B', FECHA: '35/15/2026', HORA_INICIO: '08:00' }),
-    row(12, { ID_EVENTO: 'evt-004', TIPO: 'SESION', NOMBRE: 'C', FECHA: '05/10/2026', HORA_INICIO: '09:00' }),
+    row(5, { ID_EVENTO: 'EVT-004', TIPO: 'SESION_ZAJUNA', NOMBRE: 'A', FECHA: '05/10/2026', HORA_INICIO: '08:00' }),
+    row(8, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'B', FECHA: '35/15/2026', HORA_INICIO: '08:00' }),
+    row(12, { ID_EVENTO: 'evt-004', TIPO: 'SESION_ZAJUNA', NOMBRE: 'C', FECHA: '05/10/2026', HORA_INICIO: '09:00' }),
     row(15, { TIPO: 'REUNIONX', NOMBRE: 'D', FECHA: '05/10/2026' }),
-    row(19, { TIPO: 'SESION', NOMBRE: 'E', FECHA: '05/10/2026' }),
-    row(21, { TIPO: 'SESION', NOMBRE: 'F', FECHA: '05/10/2026', HORA_INICIO: '09:00', HORA_FIN: '07:00' }),
-    row(22, { TIPO: 'SESION', NOMBRE: 'G', FECHA: '05/10/2026', HORA_INICIO: '09:00', LINK: 'meet.google.com/x' }),
+    row(19, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'E', FECHA: '05/10/2026' }),
+    row(21, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'F', FECHA: '05/10/2026', HORA_INICIO: '09:00', HORA_FIN: '07:00' }),
+    row(22, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'G', FECHA: '05/10/2026', HORA_INICIO: '09:00', LINK: 'meet.google.com/x' }),
     row(23, { TIPO: 'TRABAJO', FECHA: '05/10/2026' })
   ], TODAY);
   const at = (rowN: number, col: string) => r.errors.some((e) => e.row === rowN && e.column === col);
@@ -143,10 +143,10 @@ test('duplicados: mismo tipo, nombre, fecha y hora bloquean el guardado', () => 
 
 test('duplicados: no son duplicados si cambia el tipo, la hora o la fecha', () => {
   const r = validateRows([
-    row(2, { TIPO: 'SESION', NOMBRE: 'Proyecto', FECHA: '05/10/2026', HORA_INICIO: '08:00' }),
+    row(2, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'Proyecto', FECHA: '05/10/2026', HORA_INICIO: '08:00' }),
     row(3, { TIPO: 'CUESTIONARIO', NOMBRE: 'Proyecto', FECHA: '05/10/2026', HORA_INICIO: '08:00' }), // otro tipo
-    row(4, { TIPO: 'SESION', NOMBRE: 'Proyecto', FECHA: '05/10/2026', HORA_INICIO: '14:00' }), // otra hora
-    row(5, { TIPO: 'SESION', NOMBRE: 'Proyecto', FECHA: '12/10/2026', HORA_INICIO: '08:00' }), // otra fecha
+    row(4, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'Proyecto', FECHA: '05/10/2026', HORA_INICIO: '14:00' }), // otra hora
+    row(5, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'Proyecto', FECHA: '12/10/2026', HORA_INICIO: '08:00' }), // otra fecha
     row(6, { TIPO: 'TRABAJO', NOMBRE: 'Taller', FECHA: '06/10/2026' }),
     row(7, { TIPO: 'TRABAJO', NOMBRE: 'Taller', FECHA: '06/10/2026', HORA_INICIO: '18:00' }) // sin hora ≠ 18:00
   ], TODAY);
@@ -158,7 +158,7 @@ test('grabaciones: hora opcional, sin hora de fin, aviso sin enlace y duplicados
   const r = validateRows([
     row(2, { TIPO: 'Grabación', NOMBRE: 'Clase 1', FECHA: '06/10/2026' }),
     row(3, { TIPO: 'GRABACION', NOMBRE: 'Clase 2', FECHA: '06/10/2026', HORA_INICIO: '18:00', HORA_FIN: '20:00', LINK: 'https://youtu.be/x' }),
-    row(4, { TIPO: 'SESION', NOMBRE: 'Clase 2', FECHA: '06/10/2026', HORA_INICIO: '18:00' }) // misma clave, otro tipo: no es duplicado
+    row(4, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'Clase 2', FECHA: '06/10/2026', HORA_INICIO: '18:00' }) // misma clave, otro tipo: no es duplicado
   ], TODAY);
   assert.equal(r.errors.length, 0);
   assert.equal(r.rows.length, 3);
@@ -177,7 +177,7 @@ test('grabaciones: hora opcional, sin hora de fin, aviso sin enlace y duplicados
 
 const ev = (p: Partial<CalendarEvent>): CalendarEvent => ({
   event_id: p.event_id ?? Math.random().toString(36).slice(2),
-  category: 'SESION', type_label: 'SESION', title: 'X', event_date: '2026-10-05',
+  category: 'SESION', type_label: 'SESION_ZAJUNA', title: 'X', event_date: '2026-10-05',
   start_time: null, end_time: null, link: null, description: null, ...p
 });
 
@@ -242,7 +242,7 @@ test('FORO: se ve como foro pero vence como una entrega', () => {
   const foro = ev({ event_id: 'f', category: 'ENTREGA', type_label: 'FORO', event_date: '2026-10-07' });
   assert.equal(kindOf(foro), 'FORO');
   assert.equal(kindOf(ev({ category: 'ENTREGA', type_label: 'TRABAJO' })), 'ENTREGA');
-  assert.equal(kindOf(ev({})), 'SESION');
+  assert.equal(kindOf(ev({})), 'SESION_ZAJUNA');
   assert.equal(kindName(foro), 'Foro');
   assert.equal(deliveryStatus(foro, now, keyToMs('2026-10-07T10:00')).status, 'pronto');
   assert.deepEqual(upcoming([foro], now).map((e) => e.event_id), ['f']);
@@ -282,5 +282,55 @@ test('grabaciones: no salen en próximas actividades, nunca vencen y tienen su p
   assert.equal(isPast(rec, now), false);
   assert.equal(kindOf(rec), 'GRABACION');
   assert.equal(kindName(rec), 'Grabación');
-  assert.equal(kindName(ev({ type_label: 'CLASE' as CalendarEvent['type_label'] })), 'Sesión', 'eventos antiguos CLASE se muestran como Sesión');
+  assert.equal(kindName(ev({ type_label: 'CLASE' as CalendarEvent['type_label'] })), 'Sesión Zajuna', 'eventos antiguos CLASE se muestran como Sesión Zajuna');
+});
+
+test('tipos: se aceptan con tildes, espacios o guiones; los nombres antiguos se convierten con aviso', () => {
+  assert.deepEqual(resolveType('Sesión Zajuna'), { key: 'SESION_ZAJUNA', label: 'SESION_ZAJUNA', aliased: false });
+  assert.equal(resolveType(' sesion-adicional ').label, 'SESION_ADICIONAL');
+  assert.equal(resolveType('Dudas').label, 'DUDAS');
+  assert.deepEqual(resolveType('SESION'), { key: 'SESION', label: 'SESION_ZAJUNA', aliased: true });
+  assert.equal(resolveType('clase').label, 'SESION_ZAJUNA');
+  assert.equal(resolveType('Reunión').label, null);
+});
+
+test('Sesión Zajuna, Sesión adicional y Dudas: hora de inicio obligatoria, hora de fin permitida y avisos de enlace', () => {
+  const r = validateRows([
+    row(2, { TIPO: 'Sesión Zajuna', NOMBRE: 'Matemáticas', FECHA: '06/10/2026', HORA_INICIO: '08:00', HORA_FIN: '10:00', LINK: 'https://zajuna.sena.edu.co/x' }),
+    row(3, { TIPO: 'SESION_ADICIONAL', NOMBRE: 'Refuerzo', FECHA: '06/10/2026', HORA_INICIO: '14:00', HORA_FIN: '15:00' }),
+    row(4, { TIPO: 'DUDAS', NOMBRE: 'Resolución de dudas', FECHA: '07/10/2026', HORA_INICIO: '18:00', HORA_FIN: '19:00' }),
+    row(5, { TIPO: 'SESION', NOMBRE: 'Antigua', FECHA: '08/10/2026', HORA_INICIO: '08:00' })
+  ], TODAY);
+  assert.equal(r.errors.length, 0);
+  assert.deepEqual(r.rows.map((x) => x.type_label), ['SESION_ZAJUNA', 'SESION_ADICIONAL', 'DUDAS', 'SESION_ZAJUNA']);
+  assert.equal(r.rows[2].end_time, '19:00', 'dudas guarda la hora de fin');
+  assert.ok(r.warnings.some((w) => w.row === 4 && w.column === 'LINK' && w.message.includes('chat')), 'dudas sin enlace: aviso, no error');
+  assert.ok(r.warnings.some((w) => w.row === 5 && w.column === 'TIPO'), 'SESION se convierte a SESION_ZAJUNA con aviso');
+  assert.ok(!r.warnings.some((w) => w.row === 2 && w.column === 'TIPO'), '«Sesión Zajuna» escrito con tilde y espacio no genera aviso');
+
+  const e = validateRows([row(2, { TIPO: 'DUDAS', NOMBRE: 'Dudas', FECHA: '07/10/2026' })], TODAY);
+  assert.ok(e.errors.some((x) => x.column === 'HORA_INICIO' && x.message.includes('dudas')));
+
+  const d = validateRows([
+    row(2, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'Física', FECHA: '07/10/2026', HORA_INICIO: '08:00' }),
+    row(3, { TIPO: 'SESION_ADICIONAL', NOMBRE: 'Física', FECHA: '07/10/2026', HORA_INICIO: '08:00' }), // otro tipo: no es duplicado
+    row(4, { TIPO: 'sesion zajuna', NOMBRE: 'fisica', FECHA: '07/10/2026', HORA_INICIO: '08:00' })
+  ], TODAY);
+  assert.deepEqual(d.errors.map((x) => x.row), [4]);
+  assert.match(d.errors[0].message, /una sesión Zajuna/);
+});
+
+test('Sesión Zajuna es prioritaria y va primero a igual hora; dudas se comporta como sesión en vivo', () => {
+  const now = { date: '2026-10-07', time: '18:30' };
+  const z = ev({ event_id: 'z', type_label: 'SESION_ZAJUNA', event_date: '2026-10-08', start_time: '08:00', title: 'B' });
+  const a = ev({ event_id: 'a', type_label: 'SESION_ADICIONAL', event_date: '2026-10-08', start_time: '08:00', title: 'A' });
+  const d = ev({ event_id: 'd', type_label: 'DUDAS', event_date: '2026-10-07', start_time: '18:00', end_time: '19:00' });
+  assert.equal(isPriority(z), true);
+  assert.equal(isPriority(a), false);
+  assert.deepEqual([kindOf(z), kindOf(a), kindOf(d)], ['SESION_ZAJUNA', 'SESION_ADICIONAL', 'DUDAS']);
+  assert.deepEqual([kindName(z), kindName(a), kindName(d)], ['Sesión Zajuna', 'Sesión adicional', 'Dudas']);
+  assert.deepEqual([a, z].sort(compareEvents).map((e) => e.event_id), ['z', 'a']);
+  assert.equal(isLive(d, now), true, 'dudas está «En curso» dentro de su horario');
+  assert.deepEqual(upcoming([a, z, d], now).map((e) => e.event_id), ['d', 'z', 'a']);
+  assert.equal(kindOf(ev({ type_label: 'SESION' as CalendarEvent['type_label'] })), 'SESION_ZAJUNA', 'datos antiguos cuentan como Zajuna');
 });

@@ -56,6 +56,7 @@ function placeholderFor(key: ColumnKey, category: string): string | undefined {
     if (key === 'HORA_FIN') return 'No aplica';
     if (key === 'LINK') return 'https://… (enlace a la grabación)';
   }
+  if (category === 'DUDAS' && key === 'LINK') return 'https://… (enlace al chat, cuando se tenga)';
   if (category === 'ENTREGA' || category === 'FORO' || category === 'CUESTIONARIO') {
     if (key === 'HORA_INICIO') return '23:59';
     if (key === 'HORA_FIN') return 'No aplica';
@@ -75,8 +76,9 @@ function rowsFromEvents(events: CalendarEvent[]): Row[] {
   });
 }
 
+/** Clase de color de la fila (t-…): igual que en el calendario; TRABAJO usa el color de 'ENTREGA'. */
 const categoryOf = (type: string) =>
-  type === 'SESION' ? 'SESION' : type === 'GRABACION' ? 'GRABACION' : type === 'FORO' ? 'FORO' : type === 'CUESTIONARIO' ? 'CUESTIONARIO' : type === 'TRABAJO' ? 'ENTREGA' : '';
+  type === 'TRABAJO' ? 'ENTREGA' : isKnownType(type) ? type : '';
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
@@ -684,7 +686,7 @@ export default function GridEditor({ events, today }: { events: CalendarEvent[];
             className="paste-area"
             value={pasteText}
             onChange={(e) => setPasteText(e.target.value)}
-            placeholder={'SESION\tMatemáticas II\t05/10/2026\t08:00\t10:00\thttps://meet.google.com/abc\tUnidad 3'}
+            placeholder={'SESION_ZAJUNA\tMatemáticas II\t05/10/2026\t08:00\t10:00\thttps://meet.google.com/abc\tUnidad 3'}
           />
           {pasteText.trim() !== '' && (
             <div className="stat-sub">

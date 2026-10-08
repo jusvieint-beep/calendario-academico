@@ -1,18 +1,54 @@
-/** SESION: en vivo con horario · GRABACION: material disponible desde una fecha · ENTREGA: con fecha límite. */
+/**
+ * SESION: en vivo con horario (Sesión Zajuna, Sesión adicional y Dudas)
+ * · GRABACION: material disponible desde una fecha · ENTREGA: con fecha límite.
+ */
 export type Category = 'SESION' | 'GRABACION' | 'ENTREGA';
-export type TypeLabel = 'SESION' | 'GRABACION' | 'TRABAJO' | 'CUESTIONARIO' | 'FORO';
+export type TypeLabel = 'SESION_ZAJUNA' | 'SESION_ADICIONAL' | 'DUDAS' | 'GRABACION' | 'TRABAJO' | 'CUESTIONARIO' | 'FORO';
 
-export const TYPE_LABELS: readonly TypeLabel[] = ['SESION', 'GRABACION', 'TRABAJO', 'CUESTIONARIO', 'FORO'];
+export const TYPE_LABELS: readonly TypeLabel[] = ['SESION_ZAJUNA', 'SESION_ADICIONAL', 'DUDAS', 'GRABACION', 'TRABAJO', 'CUESTIONARIO', 'FORO'];
 
-/** Nombres antiguos que se siguen aceptando (Excel o respaldos viejos): CLASE → SESION, ENTREGA → CUESTIONARIO. */
-export const TYPE_ALIASES: Readonly<Record<string, TypeLabel>> = { CLASE: 'SESION', ENTREGA: 'CUESTIONARIO' };
+/** Tipos que se guardan con categoría SESION (en vivo, hora de inicio obligatoria). */
+export const SESSION_TYPES: readonly TypeLabel[] = ['SESION_ZAJUNA', 'SESION_ADICIONAL', 'DUDAS'];
+
+/** Texto para mensajes: «SESION_ZAJUNA, SESION_ADICIONAL, DUDAS, GRABACION, TRABAJO, CUESTIONARIO o FORO». */
+export const TYPE_LIST_TEXT = `${TYPE_LABELS.slice(0, -1).join(', ')} o ${TYPE_LABELS[TYPE_LABELS.length - 1]}`;
+
+/**
+ * Nombres antiguos o abreviados que se siguen aceptando (Excel o respaldos viejos) y se guardan
+ * con el nombre oficial, con aviso: SESION y CLASE → SESION_ZAJUNA, ENTREGA → CUESTIONARIO.
+ */
+export const TYPE_ALIASES: Readonly<Record<string, TypeLabel>> = {
+  SESION: 'SESION_ZAJUNA',
+  CLASE: 'SESION_ZAJUNA',
+  ZAJUNA: 'SESION_ZAJUNA',
+  ADICIONAL: 'SESION_ADICIONAL',
+  SESION_ADICIONALES: 'SESION_ADICIONAL',
+  DUDA: 'DUDAS',
+  ENTREGA: 'CUESTIONARIO'
+};
+
+const stripAccents = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+/** «Sesión Zajuna», «sesion-adicional», «Dudas» → «SESION_ZAJUNA», «SESION_ADICIONAL», «DUDAS» (sin aplicar alias). */
+export const typeKey = (value: string) => stripAccents(value).trim().toUpperCase().replace(/[\s-]+/g, '_');
+
+/**
+ * Convierte lo que se escribió en la columna TIPO en el tipo oficial.
+ * `aliased` = se escribió un nombre antiguo o abreviado (se avisa); `label` = null si no es un tipo conocido.
+ */
+export function resolveType(value: string): { key: string; label: TypeLabel | null; aliased: boolean } {
+  const key = typeKey(value);
+  if ((TYPE_LABELS as readonly string[]).includes(key)) return { key, label: key as TypeLabel, aliased: false };
+  const alias = TYPE_ALIASES[key];
+  return { key, label: alias ?? null, aliased: Boolean(alias) };
+}
 
 /**
  * Cómo se ve un evento. Trabajos, cuestionarios y foros se guardan con categoría ENTREGA
  * (tienen fecha límite), pero cada uno tiene color, ícono y filtro propios.
  * 'ENTREGA' aquí significa «Trabajo».
  */
-export type Kind = 'SESION' | 'GRABACION' | 'ENTREGA' | 'CUESTIONARIO' | 'FORO';
+export type Kind = 'SESION_ZAJUNA' | 'SESION_ADICIONAL' | 'DUDAS' | 'GRABACION' | 'ENTREGA' | 'CUESTIONARIO' | 'FORO';
 
 /** Evento tal como lo usa la interfaz. Fechas y horas en hora local de Colombia. */
 export interface CalendarEvent {
