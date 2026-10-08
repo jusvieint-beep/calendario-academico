@@ -100,3 +100,18 @@ export function whenText(e: CalendarEvent): string {
   }
   return `${date} · ${e.start_time ? `hasta ${formatTime(e.start_time)}` : 'sin hora límite'}`;
 }
+
+/**
+ * Orden dentro de un día del calendario. Cuando las sesiones de ese día ya pasaron
+ * (días anteriores, o hoy después de la última sesión), las grabaciones ya disponibles
+ * suben al principio: en tiempo pasado son lo más útil. El resto conserva su orden.
+ */
+export function orderDay(list: CalendarEvent[], now: NowCol): CalendarEvent[] {
+  if (list.length < 2) return list;
+  const date = list[0].event_date;
+  const sessionsOver = date < now.date || list.every((e) => e.category !== 'SESION' || isPast(e, now));
+  if (!sessionsOver) return list;
+  const top = list.filter((e) => isRecording(e) && startKey(e) <= nowKey(now));
+  if (!top.length) return list;
+  return [...top, ...list.filter((e) => !top.includes(e))];
+}

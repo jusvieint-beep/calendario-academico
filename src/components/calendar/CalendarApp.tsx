@@ -7,7 +7,7 @@ import {
   addDays, addMonths, capitalize, dayName, dayOfMonth, daysInMonth, formatDate, formatTime,
   monthLabel, nowInBogota, weekdayMondayFirst, WEEKDAYS_LONG, WEEKDAYS_SHORT, type NowCol
 } from '@/lib/dates';
-import { compareEvents, deliveryStatus, isLive, isPast, isPriority, kindName, upcoming, whenText, kindOf, startKey } from '@/lib/events';
+import { compareEvents, deliveryStatus, isLive, isPast, isPriority, kindName, orderDay, upcoming, whenText, kindOf, startKey } from '@/lib/events';
 import { CategoryIcon } from '../Icons';
 import Modal from '../Modal';
 
@@ -108,7 +108,7 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
         </div>
         <div className="grid">
           {cells.map((date, i) => {
-            const list = byDay.get(date) ?? [];
+            const list = orderDay(byDay.get(date) ?? [], now);
             const cls = ['cell'];
             if (!date.startsWith(month)) cls.push('out');
             if (i % 7 >= 5) cls.push('weekend');
@@ -151,7 +151,7 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
         {days.map((d) => (
           <div className="ag-day" key={d}>
             <div className={`ag-date${d === now.date ? ' today' : ''}`}><b>{dayOfMonth(d)}</b>{dayName(d)}</div>
-            <div className="ag-list">{list.filter((e) => e.event_date === d).map((e) => chip(e, true))}</div>
+            <div className="ag-list">{orderDay(list.filter((e) => e.event_date === d), now).map((e) => chip(e, true))}</div>
           </div>
         ))}
       </div>
@@ -298,7 +298,7 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
             <button className="icon-btn x" type="button" aria-label="Cerrar" onClick={() => setDay(null)}>✕</button>
           </div>
           {(byDay.get(day) ?? []).length ? (
-            <div className="ag-list">{(byDay.get(day) ?? []).map((e) => chip(e, true))}</div>
+            <div className="ag-list">{orderDay(byDay.get(day) ?? [], now).map((e) => chip(e, true))}</div>
           ) : (
             <div className="empty" style={{ padding: 20 }}><b>Sin actividades</b>Este día no tiene sesiones, grabaciones ni entregas.</div>
           )}

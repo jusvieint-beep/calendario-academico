@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { parseDateCell, parseTimeCell, cellToLink, cellToText } from '../src/lib/excel/normalize.ts';
 import { validateRows, type RawRow } from '../src/lib/excel/validate.ts';
 import { normalizeHeader } from '../src/lib/excel/columns.ts';
-import { upcoming, isLive, isPast, isPriority, compareEvents, deliveryStatus, kindOf, kindName } from '../src/lib/events.ts';
+import { upcoming, isLive, isPast, isPriority, compareEvents, deliveryStatus, kindOf, kindName, orderDay } from '../src/lib/events.ts';
 import { formatTime, keyToMs } from '../src/lib/dates.ts';
 import { resolveType, type CalendarEvent } from '../src/lib/types.ts';
 
@@ -335,4 +335,18 @@ test('Sesión Zajuna es prioritaria y va primero a igual hora; dudas se comporta
   assert.equal(isLive(d, now), true, 'dudas está «En curso» dentro de su horario');
   assert.deepEqual(upcoming([a, z, d], now).map((e) => e.event_id), ['d', 'z', 'a']);
   assert.equal(kindOf(ev({ type_label: 'SESION' as CalendarEvent['type_label'] })), 'SESION_ZAJUNA', 'datos antiguos cuentan como Zajuna');
+});
+
+test('día con sesiones ya terminadas: las grabaciones disponibles suben al principio', () => {
+  const ses = ev({ event_id: 's', type_label: 'SESION_ZAJUNA', event_date: '2026-10-05', start_time: '08:00', end_time: '10:00' });
+  const ent = ev({ event_id: 'e', category: 'ENTREGA', type_label: 'ENTREGA', event_date: '2026-10-05', start_time: '09:00' });
+  const quiz = ev({ event_id: 'q', category: 'ENTREGA', type_label: 'CUESTIONARIO', event_date: '2026-10-05', start_time: '12:00' });
+  const rec = ev({ event_id: 'g', category: 'GRABACION', type_label: 'GRABACION', event_date: '2026-10-05', start_time: '18:00' });
+  const day = [ses, ent, quiz, rec].sort(compareEvents);
+  const ids = (now: { date: string; time: string }) => orderDay(day, now).map((e) => e.event_id);
+  assert.deepEqual(ids({ date: '2026-10-06', time: '08:00' }), ['g', 's', 'e', 'q'], 'día pasado: grabación arriba');
+  assert.deepEqual(ids({ date: '2026-10-05', time: '19:00' }), ['g', 's', 'e', 'q'], 'hoy, sesión terminada y grabación disponible');
+  assert.deepEqual(ids({ date: '2026-10-05', time: '09:30' }), ['s', 'e', 'q', 'g'], 'sesión en curso: orden normal');
+  assert.deepEqual(ids({ date: '2026-10-05', time: '11:00' }), ['s', 'e', 'q', 'g'], 'grabación aún no disponible: orden normal');
+  assert.deepEqual(ids({ date: '2026-10-01', time: '08:00' }), ['s', 'e', 'q', 'g'], 'día futuro: orden normal');
 });
