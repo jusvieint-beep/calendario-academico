@@ -171,7 +171,9 @@ Panel `/admin` → **Recordatorio por WhatsApp**. Usa la API gratuita de CallMeB
 
 Cómo funciona (`supabase/migrations/0002_whatsapp_recordatorios.sql`):
 
-- `pg_cron` ejecuta `run_daily_digest()` cada hora; a la hora elegida arma el resumen de **mañana** (sesiones Zajuna, adicionales, dudas, entregas, cuestionarios y foros; sin grabaciones) y lo envía con la extensión `http`.
+- `pg_cron` ejecuta `run_notifications()` cada 5 minutos: a la hora elegida arma el resumen de **mañana** (sesiones Zajuna, adicionales, dudas, entregas, cuestionarios y foros; sin grabaciones) y, además, envía un **aviso antes de cada sesión** (Zajuna, adicional o dudas; por defecto 2 horas antes, con el enlace). Todo se envía con la extensión `http` (`supabase/migrations/0003_recordatorio_antes_de_sesion.sql`).
+- Cada aviso de sesión se envía una sola vez (si cambia la hora de la sesión, vuelve a avisar). Si CallMeBot falla, se reintenta máximo 3 veces.
+- `send_today_digest()` envía el resumen de lo que queda de **hoy** (uso puntual, por ejemplo programado una vez con `cron.schedule`).
 - Si mañana no hay actividades, no se envía nada. Nunca se envía dos veces para el mismo día.
 - La clave se guarda cifrada en **Supabase Vault** (`callmebot_apikey`). Las tablas `notify_settings` y `notification_log` no son accesibles desde el navegador; solo las funciones `notify_*`, que verifican `is_admin()`.
 - La bitácora (últimos envíos, errores de CallMeBot) se ve en el mismo panel. Máximo 5 pruebas por hora.

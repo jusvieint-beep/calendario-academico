@@ -6,7 +6,7 @@ import { ErrorIcon, OkIcon } from '../Icons';
 
 interface LogRow {
   id: number;
-  kind: 'digest' | 'test';
+  kind: 'digest' | 'test' | 'reminder';
   target_date: string | null;
   status: 'sent' | 'skipped' | 'error';
   http_status: number | null;
@@ -18,10 +18,14 @@ interface NotifyStatus {
   enabled: boolean;
   phone: string | null;
   send_hour: number;
+  remind_minutes: number | null;
   has_key: boolean;
   preview: string | null;
   log: LogRow[];
 }
+
+const REMIND_OPTIONS: [number | null, string][] = [[null, 'Sin recordatorio'], [30, '30 minutos antes'], [60, '1 hora antes'], [120, '2 horas antes (recomendado)'], [180, '3 horas antes'], [360, '6 horas antes']];
+const remindLabel = (m: number | null) => (m === null ? 'sin recordatorio' : m % 60 === 0 ? `${m / 60} h antes` : `${m} min antes`);
 
 const hourLabel = (h: number) => `${h % 12 === 0 ? 12 : h % 12}:00 ${h < 12 ? 'AM' : 'PM'}`;
 
@@ -50,6 +54,7 @@ export default function WhatsAppPanel() {
   const [phone, setPhone] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [hour, setHour] = useState(20);
+  const [remind, setRemind] = useState<number | null>(120);
   const [enabled, setEnabled] = useState(false);
   const [busy, setBusy] = useState<'save' | 'test' | null>(null);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -59,6 +64,7 @@ export default function WhatsAppPanel() {
     setStatus(s);
     setPhone(s.phone ?? '');
     setHour(s.send_hour);
+    setRemind(s.remind_minutes);
     setEnabled(s.enabled);
     if (!s.has_key) setShowHelp(true);
   };
@@ -83,7 +89,7 @@ export default function WhatsAppPanel() {
       const res = await fetch('/api/notify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'save', enabled: nextEnabled, phone, sendHour: hour, apiKey })
+        body: JSON.stringify({ action: 'save', enabled: nextEnabled, phone, sendHour: hour, remindMinutes: remind, apiKey })
       });
       const json = await res.json();
       if (json.ok) {
@@ -92,7 +98,7 @@ export default function WhatsAppPanel() {
         setMessage({
           ok: true,
           text: json.status.enabled && json.status.has_key
-            ? `Guardado. Recibirás el resumen de mañana todos los días a las ${hourLabel(json.status.send_hour)} (si hay actividades).`
+            ? `Guardado. Resumen de mañana todos los días a las ${hourLabel(json.status.send_hour)} (si hay actividades)${json.status.remind_minutes ? ` y aviso ${remindLabel(json.status.remind_minutes)} de cada sesión` : ''}.`
             : json.status.has_key ? 'Guardado. El recordatorio está desactivado.' : 'Guardado. Falta la clave de CallMeBot para poder enviar.'
         });
       } else {
@@ -123,7 +129,7 @@ export default function WhatsAppPanel() {
   };
 
   const pill = !status ? null
-    : status.enabled && status.has_key ? <span className="pill" style={{ background: 'var(--green-soft)', color: 'var(--green)' }}>Activo · {hourLabel(status.send_hour)}</span>
+    : status.enabled && status.has_key ? <span className="pill" style={{ background: 'var(--green-soft)', color: 'var(--green)' }}>Activo · {hourLabel(status.send_hour)}{status.remind_minutes ? ` · ${remindLabel(status.remind_minutes)}` : ''}</span>
     : !status.has_key ? <span className="pill" style={{ background: 'var(--warn-soft)', color: 'var(--warn)' }}>Falta la clave</span>
     : <span className="pill" style={{ background: 'var(--surface-2)', color: 'var(--text-dim)' }}>Desactivado</span>;
 
@@ -131,7 +137,7 @@ export default function WhatsAppPanel() {
     <section className="box" aria-labelledby="wa-title">
       <div className="box-head">
         <div className="wa-title"><h2 id="wa-title">Recordatorio por WhatsApp</h2>{pill}</div>
-        <span className="stat-sub">Solo para ti · resumen de las actividades de mañana · gratis con CallMeBot</span>
+        <span className="stat-sub">Solo para ti · resumen diario y aviso antes de cada sesión · gratis con CallMeBot</span>
       </div>
 
       {loadError && <div className="alert a-err" role="alert"><ErrorIcon /><div>{loadError}</div></div>}
@@ -177,9 +183,15 @@ export default function WhatsAppPanel() {
                 {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{hourLabel(h)}{h === 20 ? ' (recomendada)' : ''}</option>)}
               </select>
             </div>
+            <div className="field">
+              <label htmlFor="wa-remind">Aviso antes de cada sesión (Zajuna, adicional y dudas)</label>
+              <select id="wa-remind" className="wa-select" value={remind ?? ''} onChange={(e) => setRemind(e.target.value === '' ? null : Number(e.target.value))}>
+                {REMIND_OPTIONS.map(([v, l]) => <option key={l} value={v ?? ''}>{l}</option>)}
+              </select>
+            </div>
             <label className="wa-check">
               <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
-              <span>Enviarme el resumen todos los días</span>
+              <span>Activar recordatorios por WhatsApp</span>
             </label>
             <div className="wa-actions">
               <button className="btn btn-primary" type="submit" disabled={busy !== null}>{busy === 'save' ? 'Guardando…' : 'Guardar'}</button>
@@ -207,7 +219,7 @@ export default function WhatsAppPanel() {
                     <li key={l.id}>
                       <span className="pill" style={{ background: bg, color: fg }}>{label}</span>
                       <div>
-                        <b>{l.kind === 'test' ? 'Prueba' : `Resumen del ${l.target_date ? formatDateShort(l.target_date) : '—'}`}</b>
+                        <b>{l.kind === 'test' ? 'Prueba' : l.kind === 'reminder' ? `Aviso de sesión · ${l.target_date ? formatDateShort(l.target_date) : ''}` : `Resumen del ${l.target_date ? formatDateShort(l.target_date) : '—'}`}</b>
                         <span className="stat-sub">{formatInstant(l.created_at)}{l.status === 'error' && l.detail ? ` · ${l.detail}` : ''}</span>
                       </div>
                     </li>

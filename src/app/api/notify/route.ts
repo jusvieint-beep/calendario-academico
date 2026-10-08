@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 /**
  * Recordatorio diario por WhatsApp (CallMeBot) del administrador.
  * GET  → estado: activado, número, hora, si hay clave, vista previa del mensaje de mañana y últimos envíos.
- * POST { action: 'save', enabled, phone, sendHour, apiKey? } → guarda (la clave va cifrada a Supabase Vault).
+ * POST { action: 'save', enabled, phone, sendHour, remindMinutes, apiKey? } → guarda (la clave va cifrada a Supabase Vault).
  * POST { action: 'test' } → envía un mensaje de prueba ahora.
  * Toda la lógica y los permisos están en las funciones SQL notify_* (verifican is_admin()).
  */
@@ -15,6 +15,7 @@ const MESSAGES: Record<string, string> = {
   NOT_ADMIN: 'Tu usuario no tiene permisos de administrador.',
   INVALID_PHONE: 'El número no es válido. Escríbelo con indicativo, por ejemplo +57 322 484 2807.',
   INVALID_HOUR: 'La hora no es válida.',
+  INVALID_REMIND: 'El tiempo del recordatorio no es válido.',
   INVALID_KEY: 'La clave (apikey) no es válida. Copia solo el número que te envió CallMeBot.',
   TOO_MANY_TESTS: 'Ya enviaste 5 pruebas en la última hora. Espera un poco para no saturar CallMeBot.'
 };
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
   if (!auth.ok) return auth.error;
   const { supabase } = auth.ctx;
 
-  let body: { action?: string; enabled?: boolean; phone?: string; sendHour?: number; apiKey?: string };
+  let body: { action?: string; enabled?: boolean; phone?: string; sendHour?: number; apiKey?: string; remindMinutes?: number | null };
   try {
     body = await request.json();
   } catch {
@@ -55,7 +56,8 @@ export async function POST(request: Request) {
       p_enabled: Boolean(body.enabled),
       p_phone: body.phone ?? null,
       p_send_hour: Number.isInteger(body.sendHour) ? body.sendHour : 20,
-      p_apikey: body.apiKey?.trim() ? body.apiKey.trim() : null
+      p_apikey: body.apiKey?.trim() ? body.apiKey.trim() : null,
+      p_remind_minutes: Number.isInteger(body.remindMinutes) ? body.remindMinutes : null
     });
     if (error) return jsonError(400, friendly(error.message));
     return NextResponse.json({ ok: true, status: data });
