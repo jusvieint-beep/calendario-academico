@@ -26,7 +26,7 @@ ACCENT = "EFF422"
 SES_FILL = PatternFill("solid", fgColor="DCE6FB")
 ADI_FILL = PatternFill("solid", fgColor="DDF3F7")
 DUD_FILL = PatternFill("solid", fgColor="FBF0D2")
-ENT_FILL = PatternFill("solid", fgColor="FBEBDC")
+ENT_FILL = PatternFill("solid", fgColor="FDDCDF")
 REC_FILL = PatternFill("solid", fgColor="FBE1EE")
 QUIZ_FILL = PatternFill("solid", fgColor="DDF3E6")
 FORO_FILL = PatternFill("solid", fgColor="EEE4FA")
@@ -175,7 +175,7 @@ def build_instructions_sheet(wb):
         ["Columna", "¿Obligatoria?", "Formato", "Ejemplo", "Notas"],
         [
             ["ID_EVENTO", "No", "Texto", "EVT-0001", "Vacío en filas nuevas. Único: no puede repetirse."],
-            ["TIPO", "Sí", "Lista", "SESION_ZAJUNA", "SESION_ZAJUNA = sesión Zajuna, prioritaria (azul intenso). SESION_ADICIONAL = sesión adicional (cian). DUDAS = espacio de dudas por chat (ámbar). Las tres son en vivo con hora de inicio. GRABACION = grabación disponible desde su fecha (rosa). TRABAJO (naranja), CUESTIONARIO (verde) y FORO (violeta) usan hora límite."],
+            ["TIPO", "Sí", "Lista", "SESION_ZAJUNA", "SESION_ZAJUNA = sesión Zajuna, prioritaria (azul intenso). SESION_ADICIONAL = sesión adicional (cian). DUDAS = espacio de dudas por chat (ámbar). Las tres son en vivo con hora de inicio. GRABACION = grabación disponible desde su fecha (rosa). TRABAJO (rojo), CUESTIONARIO (verde) y FORO (violeta) usan hora límite."],
             ["NOMBRE", "Sí", "Texto", "Matemáticas II", "Máximo 150 caracteres."],
             ["FECHA", "Sí", "dd/mm/aaaa", "05/10/2026", "Fecha de la sesión, del espacio de dudas o de la entrega."],
             ["HORA_INICIO", "Sí en sesiones y dudas", "HH:MM (24 h)", "08:00", "En trabajos es la hora límite. Si un trabajo no tiene hora, vence a las 11:59 PM."],
