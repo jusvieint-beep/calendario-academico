@@ -63,10 +63,10 @@ function WaText({ text }: { text: string }) {
 function KeyHelp() {
   return (
     <ol className="wa-help">
-      <li>Desde el celular del número a agregar, guarda en contactos el bot de CallMeBot: <b>+34 644 97 54 14</b> (el anterior, +34 623 91 22 04, está lleno).</li>
-      <li>Envíale por WhatsApp exactamente la frase que indique el bot, por ejemplo: <code>I allow callmebot to send me messages</code></li>
-      <li>Responderá con la <b>apikey</b> de ese número. Cada número tiene su propia clave.</li>
-      <li>Si el bot responde que está lleno, guarda el nuevo número que indique y repite el paso 2 con ese.</li>
+      <li>Desde el celular del número a agregar, guarda en contactos el bot de CallMeBot <b>+34 623 91 22 04</b> y envíale: <code>I allow callmebot to send me messages</code></li>
+      <li>Si responde <i>«This Bot is full»</i>, guarda <b>el número nuevo que indique ese mensaje</b> (cada persona puede recibir un bot distinto) y envíale <b>exactamente</b> la frase que pide.</li>
+      <li>Repite hasta recibir <i>«CallMeBot API Activated»</i> con la <b>apikey</b>. Cada número tiene su propia clave.</li>
+      <li>Pega la clave aquí. Si más adelante el bot da una clave nueva, usa «Editar» para cambiarla.</li>
     </ol>
   );
 }
