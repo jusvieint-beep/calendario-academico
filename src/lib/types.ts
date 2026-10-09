@@ -64,7 +64,12 @@ export interface CalendarEvent {
   end_time: string | null;
   link: string | null;
   description: string | null;
+  /** Persona que dicta la sesión (solo Sesión Zajuna y Sesión adicional). */
+  instructor: string | null;
 }
+
+/** Tipos que pueden tener instructor. */
+export const INSTRUCTOR_TYPES: readonly TypeLabel[] = ['SESION_ZAJUNA', 'SESION_ADICIONAL'];
 
 /** Fila del Excel ya validada y normalizada, lista para enviar a Supabase. */
 export interface ImportRow {
@@ -76,6 +81,8 @@ export interface ImportRow {
   end_time: string | null;
   link: string | null;
   description: string | null;
+  /** undefined = el archivo no trae la columna INSTRUCTOR: se conserva el instructor guardado. */
+  instructor?: string | null;
 }
 
 export interface RowIssue {
@@ -105,6 +112,7 @@ export interface EventFields {
   end_time: string | null;
   link: string | null;
   description: string | null;
+  instructor?: string | null;
 }
 
 /** Respuesta de las funciones SQL apply_calendar_import / restore_snapshot. */

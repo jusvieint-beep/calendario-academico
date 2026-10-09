@@ -38,6 +38,7 @@ create table if not exists public.events (
   end_time     time,
   link         text check (link is null or link ~* '^https?://'),
   description  text check (description is null or char_length(description) <= 2000),
+  instructor   text check (instructor is null or char_length(instructor) <= 120),
   source       text not null default 'excel',
   sort_at      timestamptz not null,
   content_hash text not null,
@@ -51,6 +52,10 @@ create table if not exists public.events (
     (category = 'ENTREGA'   and type_label in ('ENTREGA', 'CUESTIONARIO', 'FORO'))
   )
 );
+
+-- Bases creadas antes de existir la columna INSTRUCTOR.
+alter table public.events add column if not exists instructor text
+  check (instructor is null or char_length(instructor) <= 120);
 
 create index if not exists events_sort_at_idx on public.events (sort_at);
 create index if not exists events_event_date_idx on public.events (event_date);
@@ -123,6 +128,20 @@ as $$
     coalesce(p_link, ''), coalesce(p_description, '')));
 $$;
 
+-- Con instructor: misma huella si no tiene instructor (las huellas existentes siguen válidas).
+create or replace function public.event_hash(
+  p_category text, p_type_label text, p_title text, p_date date,
+  p_start time, p_end time, p_link text, p_description text, p_instructor text)
+returns text
+language sql
+immutable
+as $$
+  select case when p_instructor is null
+              then public.event_hash(p_category, p_type_label, p_title, p_date, p_start, p_end, p_link, p_description)
+              else md5(public.event_hash(p_category, p_type_label, p_title, p_date, p_start, p_end, p_link, p_description)
+                       || '|instructor|' || p_instructor) end;
+$$;
+
 -- Instante real del evento en Colombia. Entregas sin hora = 23:59 (regla D1).
 create or replace function public.event_sort_at(p_date date, p_start time)
 returns timestamptz
@@ -138,7 +157,8 @@ $$;
 --     [{ "event_id": "EVT-0001" | null, "type_label": "SESION_ZAJUNA", "title": "...",
 --        "event_date": "2026-10-05", "start_time": "08:00" | null,
 --        "end_time": "10:00" | null, "link": "https://..." | null,
---        "description": "..." | null }, ...]
+--        "description": "..." | null, "instructor": "..." | null }, ...]
+--     Si una fila no trae la clave "instructor" (Excel antiguo), se conserva el instructor guardado.
 --   p_dry_run = true  → solo calcula la vista previa, no cambia nada.
 --   p_dry_run = false → aplica TODO en una sola transacción (o nada si falla).
 --   p_expected_version: versión vista en la vista previa. Si alguien aplicó
@@ -222,6 +242,8 @@ begin
     (nullif(x.r->>'end_time', ''))::time                         as end_time,
     nullif(btrim(x.r->>'link'), '')                              as link,
     nullif(btrim(x.r->>'description'), '')                       as description,
+    nullif(regexp_replace(btrim(x.r->>'instructor'), '\s+', ' ', 'g'), '') as instructor,
+    x.r ? 'instructor'                                           as has_instructor,
     nullif(btrim(x.r->>'event_id'), '') is null                  as auto_id
   from jsonb_array_elements(p_rows) with ordinality as x(r, ord);
 
@@ -254,10 +276,19 @@ begin
      where t.rn = s.rn;
   end if;
 
+  -- Sin columna INSTRUCTOR en el archivo: se conserva el guardado. Solo las sesiones Zajuna y adicionales tienen instructor.
+  update _incoming i
+     set instructor = e.instructor
+    from public.events e
+   where not i.has_instructor and e.event_id = i.event_id;
+  update _incoming
+     set instructor = null
+   where instructor is not null and type_label not in ('SESION_ZAJUNA', 'SESION_ADICIONAL');
+
   alter table _incoming add column content_hash text;
   -- Supabase exige WHERE en todo UPDATE (extensión safeupdate).
   update _incoming
-     set content_hash = public.event_hash(category, type_label, title, event_date, start_time, end_time, link, description)
+     set content_hash = public.event_hash(category, type_label, title, event_date, start_time, end_time, link, description, instructor)
    where content_hash is null;
 
   -- Comparación por ID_EVENTO → listas de la vista previa (y del resultado).
@@ -274,10 +305,10 @@ begin
            'event_id', i.event_id,
            'before', jsonb_build_object('type_label', e.type_label, 'title', e.title, 'event_date', e.event_date,
                      'start_time', to_char(e.start_time, 'HH24:MI'), 'end_time', to_char(e.end_time, 'HH24:MI'),
-                     'link', e.link, 'description', e.description),
+                     'link', e.link, 'description', e.description, 'instructor', e.instructor),
            'after', jsonb_build_object('type_label', i.type_label, 'title', i.title, 'event_date', i.event_date,
                      'start_time', to_char(i.start_time, 'HH24:MI'), 'end_time', to_char(i.end_time, 'HH24:MI'),
-                     'link', i.link, 'description', i.description))
+                     'link', i.link, 'description', i.description, 'instructor', i.instructor))
            order by i.event_date, i.start_time nulls last, i.rn), '[]'::jsonb)
     into v_updated
   from _incoming i join public.events e on e.event_id = i.event_id
@@ -340,6 +371,7 @@ begin
          end_time     = i.end_time,
          link         = i.link,
          description  = i.description,
+         instructor   = i.instructor,
          source       = 'excel',
          sort_at      = public.event_sort_at(i.event_date, i.start_time),
          content_hash = i.content_hash,
@@ -348,9 +380,9 @@ begin
    where e.event_id = i.event_id and e.content_hash <> i.content_hash;
 
   insert into public.events (event_id, category, type_label, title, event_date, start_time, end_time,
-                             link, description, source, sort_at, content_hash)
+                             link, description, instructor, source, sort_at, content_hash)
   select i.event_id, i.category, i.type_label, i.title, i.event_date, i.start_time, i.end_time,
-         i.link, i.description, 'excel', public.event_sort_at(i.event_date, i.start_time), i.content_hash
+         i.link, i.description, i.instructor, 'excel', public.event_sort_at(i.event_date, i.start_time), i.content_hash
   from _incoming i
   where not exists (select 1 from public.events e where e.event_id = i.event_id);
 
@@ -430,6 +462,8 @@ begin
            'event_id', x.e->>'event_id', 'type_label', x.e->>'type_label', 'title', x.e->>'title',
            'event_date', x.e->>'event_date', 'start_time', left(x.e->>'start_time', 5),
            'end_time', left(x.e->>'end_time', 5), 'link', x.e->>'link', 'description', x.e->>'description')
+           -- Respaldos anteriores a la columna INSTRUCTOR no traen la clave: se conserva el instructor actual.
+           || case when x.e ? 'instructor' then jsonb_build_object('instructor', x.e->'instructor') else '{}'::jsonb end
            order by x.ord), '[]'::jsonb)
     into v_rows
   from jsonb_array_elements(v_rows) with ordinality as x(e, ord);
@@ -475,6 +509,7 @@ $$;
 
 -- Funciones auxiliares con search_path fijo (recomendación del revisor de seguridad de Supabase).
 alter function public.event_hash(text, text, text, date, time, time, text, text) set search_path = '';
+alter function public.event_hash(text, text, text, date, time, time, text, text, text) set search_path = '';
 alter function public.event_sort_at(date, time) set search_path = '';
 
 -- ---------------------------------------------------------------------------

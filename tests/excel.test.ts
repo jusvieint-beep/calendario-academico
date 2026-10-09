@@ -20,7 +20,7 @@ function row(n: number, c: Partial<Record<string, unknown>>): RawRow {
     row: n,
     cells: {
       ID_EVENTO: null, TIPO: null, NOMBRE: null, FECHA: null,
-      HORA_INICIO: null, HORA_FIN: null, LINK: null, DESCRIPCION: null,
+      HORA_INICIO: null, HORA_FIN: null, LINK: null, DESCRIPCION: null, INSTRUCTOR: null,
       ...c
     } as RawRow['cells']
   };
@@ -80,7 +80,7 @@ test('validación: archivo correcto produce filas normalizadas', () => {
   assert.equal(r.rows.length, 4);
   assert.deepEqual(r.rows[0], {
     event_id: null, type_label: 'SESION_ZAJUNA', title: 'Matemáticas', event_date: '2026-10-05',
-    start_time: '08:00', end_time: '10:00', link: 'https://meet.google.com/x', description: null
+    start_time: '08:00', end_time: '10:00', link: 'https://meet.google.com/x', description: null, instructor: null
   });
   // CLASE es el nombre antiguo de SESION: se acepta y se avisa.
   assert.ok(r.warnings.some((w) => w.row === 2 && w.column === 'TIPO' && w.message.includes('SESION_ZAJUNA')));
@@ -349,4 +349,24 @@ test('día con sesiones ya terminadas: las grabaciones disponibles suben al prin
   assert.deepEqual(ids({ date: '2026-10-05', time: '09:30' }), ['s', 'e', 'q', 'g'], 'sesión en curso: orden normal');
   assert.deepEqual(ids({ date: '2026-10-05', time: '11:00' }), ['s', 'e', 'q', 'g'], 'grabación aún no disponible: orden normal');
   assert.deepEqual(ids({ date: '2026-10-01', time: '08:00' }), ['s', 'e', 'q', 'g'], 'día futuro: orden normal');
+});
+
+test('INSTRUCTOR: solo en Sesión Zajuna y adicional, máximo 120 caracteres; Excel sin la columna conserva los guardados', () => {
+  const r = validateRows([
+    row(2, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'Física', FECHA: '10/10/2026', HORA_INICIO: '08:00', INSTRUCTOR: 'Ana Pérez' }),
+    row(3, { TIPO: 'SESION_ADICIONAL', NOMBRE: 'Refuerzo', FECHA: '10/10/2026', HORA_INICIO: '14:00' }),
+    row(4, { TIPO: 'DUDAS', NOMBRE: 'Dudas', FECHA: '10/10/2026', HORA_INICIO: '18:00', INSTRUCTOR: 'Ana Pérez' })
+  ], TODAY);
+  assert.equal(r.errors.length, 0);
+  assert.deepEqual(r.rows.map((x) => x.instructor), ['Ana Pérez', null, null]);
+  assert.ok(r.warnings.some((w) => w.row === 4 && w.column === 'INSTRUCTOR'), 'en dudas se ignora con aviso');
+
+  const largo = validateRows([row(2, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'X', FECHA: '10/10/2026', HORA_INICIO: '08:00', INSTRUCTOR: 'a'.repeat(121) })], TODAY);
+  assert.ok(largo.errors.some((e) => e.column === 'INSTRUCTOR'));
+
+  // Plantilla anterior: la columna no existe → la fila no trae «instructor» (la base conserva el guardado).
+  const viejo = validateRows([{ row: 2, cells: { ID_EVENTO: null, TIPO: 'SESION_ZAJUNA', NOMBRE: 'Física', FECHA: '10/10/2026', HORA_INICIO: '08:00', HORA_FIN: null, LINK: null, DESCRIPCION: null, INSTRUCTOR: undefined } }], TODAY);
+  assert.equal(viejo.errors.length, 0);
+  assert.equal('instructor' in viejo.rows[0], false);
+  assert.ok(viejo.warnings.some((w) => w.row === 0 && w.column === 'INSTRUCTOR'));
 });

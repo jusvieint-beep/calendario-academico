@@ -8,7 +8,7 @@ import {
   monthLabel, nowInBogota, weekdayMondayFirst, WEEKDAYS_LONG, WEEKDAYS_SHORT, type NowCol
 } from '@/lib/dates';
 import { compareEvents, deliveryStatus, isLive, isPast, isPriority, kindName, orderDay, upcoming, whenText, kindOf, startKey } from '@/lib/events';
-import { CategoryIcon } from '../Icons';
+import { CategoryIcon, PersonIcon } from '../Icons';
 import Modal from '../Modal';
 
 type Filter = 'all' | Kind;
@@ -75,14 +75,14 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
       type="button"
       className={`ev ${kindOf(e)}${isPast(e, now) ? ' past' : ''}`}
       onClick={(ev) => { ev.stopPropagation(); setDay(null); setDetail(e); }}
-      title={`${kindName(e)}: ${e.title}`}
+      title={`${kindName(e)}: ${e.title}${e.instructor ? ` · Instructor: ${e.instructor}` : ''}`}
       style={big ? { fontSize: 13, padding: '9px 10px', borderRadius: 8 } : undefined}
     >
       <CategoryIcon category={kindOf(e)} />
       {big ? (
         <>
           <span className="t">{e.start_time ? formatTime(e.start_time) : 'Sin hora'}</span>
-          <span className="n">{kindName(e)}: {e.title}</span>
+          <span className="n">{kindName(e)}: {e.title}{e.instructor && <span className="ev-inst"> · {e.instructor}</span>}</span>
         </>
       ) : (
         <>
@@ -266,6 +266,7 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
                     <span className="up-kind">{kindName(e)}</span>
                     <span className="up-title">{e.title}</span>
                     <span className="up-when">{whenText(e)}</span>
+                    {e.instructor && <span className="up-inst"><PersonIcon />{e.instructor}</span>}
                     {(prio || badge || join) && <div className="up-row">{prio}{badge}{join}</div>}
                   </div>
                 </div>
@@ -334,6 +335,9 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
                 <dt>Fecha</dt><dd>{capitalize(formatDate(detail.event_date, true, true))}</dd>
                 <dt>Hora</dt><dd className="num">{formatTime(detail.start_time)}{detail.end_time ? ` – ${formatTime(detail.end_time)}` : ''}</dd>
                 <dt>Tipo</dt><dd>{kindName(detail)}</dd>
+                {(detail.instructor || kindOf(detail) === 'SESION_ZAJUNA' || kindOf(detail) === 'SESION_ADICIONAL') && (
+                  <><dt>Instructor</dt><dd>{detail.instructor ?? <span style={{ color: 'var(--text-faint)' }}>Por confirmar</span>}</dd></>
+                )}
                 {detail.description && (<><dt>Descripción</dt><dd>{detail.description}</dd></>)}
                 <dt>{kindOf(detail) === 'DUDAS' ? 'Chat' : 'Enlace'}</dt><dd>{detail.link ?? <span style={{ color: 'var(--text-faint)' }}>{kindOf(detail) === 'DUDAS' ? 'El enlace al chat se publicará cuando esté disponible' : 'Aún no tiene enlace'}</span>}</dd>
               </dl>

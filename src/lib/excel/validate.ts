@@ -1,4 +1,4 @@
-import { SESSION_TYPES, TYPE_LIST_TEXT, resolveType, type ImportRow, type RowIssue, type TypeLabel } from '../types';
+import { INSTRUCTOR_TYPES, SESSION_TYPES, TYPE_LIST_TEXT, resolveType, type ImportRow, type RowIssue, type TypeLabel } from '../types';
 import { formatDateShort } from '../dates';
 import { MAX_ROWS, type ColumnKey } from './columns';
 import { cellToLink, cellToText, displayValue, isEmptyCell, parseDateCell, parseTimeCell } from './normalize';
@@ -18,6 +18,7 @@ export interface ValidationResult {
 export const ID_PATTERN = /^[A-Za-z0-9._-]{1,40}$/;
 const TITLE_MAX = 150;
 const DESCRIPTION_MAX = 2000;
+const INSTRUCTOR_MAX = 120;
 
 const stripAccents = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '');
 
@@ -34,6 +35,11 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
     warnings.push({ row, column, value: displayValue(value), message, fix });
 
   const dataRows = raw.filter((r) => !Object.values(r.cells).every(isEmptyCell));
+  // Archivo sin columna INSTRUCTOR (plantilla anterior): se conservan los instructores ya guardados.
+  const hasInstructorColumn = raw.some((r) => r.cells.INSTRUCTOR !== undefined);
+  if (dataRows.length && !hasInstructorColumn) {
+    warn(0, 'INSTRUCTOR', '', 'El archivo no tiene la columna INSTRUCTOR. Se conservan los instructores ya guardados.', 'Descarga el «Excel actual» desde /admin para tener la columna INSTRUCTOR.');
+  }
 
   if (dataRows.length === 0) {
     err(0, 'Archivo', '', 'El archivo no tiene filas con datos.', 'Escribe los eventos desde la fila 2 de la hoja «Calendario».');
@@ -143,6 +149,15 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
       err(row, 'DESCRIPCION', cells.DESCRIPCION, `La descripción tiene ${description.length} caracteres; el máximo es ${DESCRIPTION_MAX}.`, 'Acórtala.');
     }
 
+    // INSTRUCTOR (solo Sesión Zajuna y Sesión adicional)
+    let instructor: string | null | undefined = hasInstructorColumn ? cellToText(cells.INSTRUCTOR).replace(/\s+/g, ' ') || null : undefined;
+    if (instructor && instructor.length > INSTRUCTOR_MAX) {
+      err(row, 'INSTRUCTOR', cells.INSTRUCTOR, `El nombre del instructor tiene ${instructor.length} caracteres; el máximo es ${INSTRUCTOR_MAX}.`, 'Acórtalo.');
+    } else if (instructor && type && !INSTRUCTOR_TYPES.includes(type)) {
+      warn(row, 'INSTRUCTOR', cells.INSTRUCTOR, 'El instructor solo aplica a SESION_ZAJUNA y SESION_ADICIONAL; se ignorará.', 'Deja la celda vacía en este tipo de evento.');
+      instructor = null;
+    }
+
     if (errors.length > before || !type || !date) continue;
 
     if (date < today) {
@@ -176,7 +191,8 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
       start_time: start,
       end_time: isSession ? end : null,
       link: link || null,
-      description: description || null
+      description: description || null,
+      ...(instructor === undefined ? {} : { instructor })
     });
   }
 

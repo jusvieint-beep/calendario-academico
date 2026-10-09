@@ -44,6 +44,7 @@ COLUMNS = [
     ("HORA_FIN", 11, "Solo para sesiones y dudas. Debe ser posterior a la hora de inicio."),
     ("LINK", 42, "Enlace de la sesión, del chat de dudas o del recurso (https://...). Opcional."),
     ("DESCRIPCION", 46, "Información adicional. Opcional. Máximo 2.000 caracteres."),
+    ("INSTRUCTOR", 28, "Persona que dicta la sesión. Opcional. Solo para SESION_ZAJUNA y SESION_ADICIONAL."),
 ]
 
 
@@ -58,7 +59,7 @@ def build_calendar_sheet(ws):
         ws.column_dimensions[cell.column_letter].width = width
     ws.row_dimensions[1].height = 24
     ws.freeze_panes = "A2"
-    ws.auto_filter.ref = f"A1:H{ROWS + 1}"
+    ws.auto_filter.ref = f"A1:I{ROWS + 1}"
 
     for r in range(2, ROWS + 2):
         ws.cell(row=r, column=1).number_format = "@"
@@ -102,8 +103,12 @@ def build_calendar_sheet(ws):
     desc = DataValidation(type="custom", formula1="TRUE", allow_blank=True, showInputMessage=True,
                           promptTitle="DESCRIPCION", prompt=COLUMNS[7][2])
     desc.add(f"H2:H{last}")
+    inst = DataValidation(type="textLength", operator="lessThanOrEqual", formula1="120", allow_blank=True,
+                          showErrorMessage=True, errorTitle="Nombre muy largo", error="Máximo 120 caracteres.",
+                          showInputMessage=True, promptTitle="INSTRUCTOR", prompt=COLUMNS[8][2])
+    inst.add(f"I2:I{last}")
 
-    for dv in (tipo, fecha, hora, nombre, idv, link, desc):
+    for dv in (tipo, fecha, hora, nombre, idv, link, desc, inst):
         ws.add_data_validation(dv)
 
 
@@ -182,6 +187,7 @@ def build_instructions_sheet(wb):
             ["HORA_FIN", "No", "HH:MM (24 h)", "10:00", "Solo para sesiones y dudas. Debe ser posterior a la hora de inicio. Sin hora fin, se considera de 1 hora."],
             ["LINK", "No", "https://…", "https://meet.google.com/abc", "Sesiones: botón «Ingresar a la sesión». Dudas: botón «Ir al chat de dudas» (agrégalo cuando se tenga). Sin enlace se publica sin botón."],
             ["DESCRIPCION", "No", "Texto", "Traer calculadora", "Máximo 2.000 caracteres."],
+            ["INSTRUCTOR", "No", "Texto", "Ana Pérez", "Quién dicta la sesión. Solo en SESION_ZAJUNA y SESION_ADICIONAL; en otros tipos se ignora. Máximo 120 caracteres."],
         ],
     )
     row += 1
@@ -190,7 +196,7 @@ def build_instructions_sheet(wb):
     table(
         ["ID_EVENTO", "TIPO", "NOMBRE", "FECHA · HORAS", "LINK / DESCRIPCIÓN"],
         [
-            ["EVT-0001", "SESION_ZAJUNA", "Matemáticas II", "05/10/2026 · 08:00 – 10:00", "https://zajuna.sena.edu.co/… · Unidad 3"],
+            ["EVT-0001", "SESION_ZAJUNA", "Matemáticas II", "05/10/2026 · 08:00 – 10:00", "https://zajuna.sena.edu.co/… · Unidad 3 · Instructor: Ana Pérez"],
             ["(vacío)", "SESION_ADICIONAL", "Refuerzo de Matemáticas", "06/10/2026 · 18:00 – 19:00", "https://meet.google.com/abc"],
             ["(vacío)", "DUDAS", "Resolución de dudas", "07/10/2026 · 19:00 – 20:00", "Enlace al chat cuando se tenga"],
             ["(vacío)", "GRABACION", "Grabación: Matemáticas II", "05/10/2026 · sin hora", "https://youtu.be/abc · Clase del 5 de octubre"],

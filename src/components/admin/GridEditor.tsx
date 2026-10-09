@@ -43,7 +43,8 @@ const PLACEHOLDER: Partial<Record<ColumnKey, string>> = {
   HORA_INICIO: '08:00',
   HORA_FIN: '10:00',
   LINK: 'https://…',
-  DESCRIPCION: 'Opcional'
+  DESCRIPCION: 'Opcional',
+  INSTRUCTOR: 'Opcional'
 };
 const BIG_DELETE_RATIO = 0.3;
 const EMPTY_START_ROWS = 5;
@@ -56,6 +57,7 @@ function placeholderFor(key: ColumnKey, category: string): string | undefined {
     if (key === 'HORA_FIN') return 'No aplica';
     if (key === 'LINK') return 'https://… (enlace a la grabación)';
   }
+  if (key === 'INSTRUCTOR') return category === 'SESION_ZAJUNA' || category === 'SESION_ADICIONAL' ? 'Quién dicta la sesión' : category ? 'No aplica' : 'Opcional';
   if (category === 'DUDAS' && key === 'LINK') return 'https://… (enlace al chat, cuando se tenga)';
   if (category === 'ENTREGA' || category === 'FORO' || category === 'CUESTIONARIO') {
     if (key === 'HORA_INICIO') return '23:59';
@@ -130,7 +132,7 @@ export default function GridEditor({ events, today }: { events: CalendarEvent[];
         if (d && d < today) return false;
       }
       if (q) {
-        const haystack = `${r.cells.ID_EVENTO} ${r.cells.NOMBRE} ${r.cells.FECHA} ${r.cells.DESCRIPCION}`.toLowerCase();
+        const haystack = `${r.cells.ID_EVENTO} ${r.cells.NOMBRE} ${r.cells.FECHA} ${r.cells.DESCRIPCION} ${r.cells.INSTRUCTOR}`.toLowerCase();
         if (!haystack.includes(q)) return false;
       }
       return true;
@@ -512,7 +514,7 @@ export default function GridEditor({ events, today }: { events: CalendarEvent[];
                               value={r.cells[key]}
                               placeholder={placeholderFor(key, cat)}
                               disabled={stage === 'checking'}
-                              spellCheck={key === 'NOMBRE' || key === 'DESCRIPCION'}
+                              spellCheck={key === 'NOMBRE' || key === 'DESCRIPCION' || key === 'INSTRUCTOR'}
                               inputMode={key === 'FECHA' || key === 'HORA_INICIO' || key === 'HORA_FIN' ? 'numeric' : key === 'LINK' ? 'url' : undefined}
                               autoComplete="off"
                               onChange={(e) => setCell(r.id, key, key === 'TIPO' ? normalizeType(e.target.value) : e.target.value)}

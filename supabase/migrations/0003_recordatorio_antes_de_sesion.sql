@@ -53,6 +53,7 @@ begin
              || case when e.category = 'ENTREGA'
                      then ' (vence ' || trim(to_char(date '2000-01-01' + coalesce(e.start_time, time '23:59'), 'FMHH12:MI AM')) || ')'
                      else '' end
+             || coalesce(' · 👤 ' || e.instructor, '')
              as line
         from public.events e
        where e.event_date = p_date
@@ -206,6 +207,7 @@ begin
              || case e.type_label when 'SESION_ADICIONAL' then '🔷 ' when 'DUDAS' then '🟡 ' else '🔵 ' end || e.title || E'\n'
              || '🕒 ' || trim(to_char(date '2000-01-01' + e.start_time, 'FMHH12:MI AM'))
              || coalesce(' – ' || trim(to_char(date '2000-01-01' + e.end_time, 'FMHH12:MI AM')), '')
+             || coalesce(E'\n👤 Instructor: ' || e.instructor, '')
              || case when e.link is not null
                      then E'\n' || case when e.type_label = 'DUDAS' then '💬 Chat: ' else '🔗 Ingresar: ' end || e.link
                      else '' end;

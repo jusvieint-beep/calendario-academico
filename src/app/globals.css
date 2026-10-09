@@ -338,6 +338,7 @@ table.sheet { width: 100%; min-width: 1120px; border-collapse: separate; border-
 .sheet th.c-HORA_INICIO, .sheet th.c-HORA_FIN { width: 86px; }
 .sheet th.c-LINK { width: 180px; }
 .sheet th.c-DESCRIPCION { width: 180px; }
+.sheet th.c-INSTRUCTOR { width: 170px; }
 .sheet th.rn, .sheet td.rn { width: 46px; }
 .sheet th.act, .sheet td.act { width: 104px; }
 .sheet td { padding: 0; border-top: none; border-bottom: 1px solid var(--border-soft); border-left: 1px solid var(--border-soft); vertical-align: middle; }
@@ -399,3 +400,7 @@ table.sheet { width: 100%; min-width: 1120px; border-collapse: separate; border-
 .wa-log li { display: flex; gap: 10px; align-items: flex-start; font-size: 12.5px; }
 .wa-log li > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 @media (max-width: 760px) { .wa-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.up-inst { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-dim); }
+.up-inst svg { width: 13px; height: 13px; flex: 0 0 13px; }
+.ev-inst { color: var(--text-dim); font-weight: 500; }

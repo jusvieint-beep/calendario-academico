@@ -1,6 +1,6 @@
 import type { CalendarEvent } from './types';
 
-const EVENT_COLUMNS = 'event_id, category, type_label, title, event_date, start_time, end_time, link, description';
+const EVENT_COLUMNS = 'event_id, category, type_label, title, event_date, start_time, end_time, link, description, instructor';
 
 export { EVENT_COLUMNS };
 
@@ -16,7 +16,8 @@ export function normalizeEvent(row: Record<string, unknown>): CalendarEvent {
     start_time: hhmm(row.start_time),
     end_time: hhmm(row.end_time),
     link: (row.link as string | null) ?? null,
-    description: (row.description as string | null) ?? null
+    description: (row.description as string | null) ?? null,
+    instructor: (row.instructor as string | null) ?? null
   };
 }
 

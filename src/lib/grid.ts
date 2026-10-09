@@ -27,7 +27,8 @@ export function eventToCells(e: CalendarEvent): GridCells {
     HORA_INICIO: e.start_time ?? '',
     HORA_FIN: e.end_time ?? '',
     LINK: e.link ?? '',
-    DESCRIPCION: e.description ?? ''
+    DESCRIPCION: e.description ?? '',
+    INSTRUCTOR: e.instructor ?? ''
   };
 }
 
@@ -90,8 +91,8 @@ export function dropHeaderRow(matrix: string[][]): string[][] {
 /**
  * Convierte filas copiadas de Excel en filas nuevas del editor («Pegar desde Excel»).
  *  - Con fila de encabezados: cada columna se ubica por su nombre (sirve aunque el orden cambie).
- *  - Sin encabezados: 8 o más columnas = empieza en ID_EVENTO; menos = empieza en TIPO
- *    (lo usual es copiar sin la columna de ID).
+ *  - Sin encabezados: si la primera columna trae tipos (SESION_ZAJUNA, ENTREGA…) empieza en TIPO
+ *    (lo usual es copiar sin la columna de ID); si no, empieza en ID_EVENTO.
  */
 export function matrixToCells(matrix: string[][]): GridCells[] {
   if (!matrix.length) return [];
@@ -104,8 +105,9 @@ export function matrixToCells(matrix: string[][]): GridCells[] {
     keyAt = (col) => ((COLUMN_KEYS as string[]).includes(header[col]) ? (header[col] as ColumnKey) : undefined);
     data = matrix.slice(1);
   } else {
-    const width = Math.max(...matrix.map((r) => r.length));
-    const offset = width >= COLUMN_KEYS.length ? 0 : 1;
+    const firstIsType = matrix.filter((r) => (r[0] ?? '').trim()).filter((r) => resolveType(r[0]).label).length;
+    const firstIsOther = matrix.filter((r) => (r[0] ?? '').trim() && !resolveType(r[0]).label).length;
+    const offset = firstIsType > firstIsOther ? 1 : 0;
     keyAt = (col) => COLUMN_KEYS[col + offset];
   }
 

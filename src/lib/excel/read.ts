@@ -41,7 +41,7 @@ export async function readCalendarWorkbook(buffer: ArrayBuffer): Promise<ReadRes
     if (known.has(name as ColumnKey) && !positions.has(name as ColumnKey)) positions.set(name as ColumnKey, colNumber);
   });
 
-  const missing = COLUMNS.filter((c) => !positions.has(c.key)).map((c) => c.key);
+  const missing = COLUMNS.filter((c) => !c.optionalHeader && !positions.has(c.key)).map((c) => c.key);
   if (missing.length) {
     return {
       raw: [],
@@ -58,7 +58,9 @@ export async function readCalendarWorkbook(buffer: ArrayBuffer): Promise<ReadRes
     const row = sheet.getRow(r);
     const cells = {} as Record<ColumnKey, unknown>;
     for (const col of COLUMNS) {
-      cells[col.key] = row.getCell(positions.get(col.key)!).value;
+      const pos = positions.get(col.key);
+      // Columna opcional ausente (archivo antiguo): undefined = «no viene en el archivo».
+      cells[col.key] = pos === undefined ? undefined : row.getCell(pos).value;
     }
     raw.push({ row: r, cells });
   }

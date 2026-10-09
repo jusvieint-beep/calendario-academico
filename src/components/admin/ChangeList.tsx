@@ -12,7 +12,8 @@ const FIELD_LABELS: [keyof EventFields, string][] = [
   ['start_time', 'Hora'],
   ['end_time', 'Hora fin'],
   ['link', 'Enlace'],
-  ['description', 'Descripción']
+  ['description', 'Descripción'],
+  ['instructor', 'Instructor']
 ];
 
 function show(field: keyof EventFields, v: string | null): string {

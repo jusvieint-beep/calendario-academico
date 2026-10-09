@@ -31,7 +31,8 @@ export function checkGridRows(input: unknown): UploadCheck {
     const cells = {} as Record<ColumnKey, unknown>;
     for (const col of COLUMNS) {
       const v = o[col.key];
-      cells[col.key] = v === null || v === undefined ? null : String(v).slice(0, MAX_CELL_CHARS);
+      // Una columna opcional que el editor no envía (versión antigua de la página) se trata como ausente.
+      cells[col.key] = v === undefined && col.optionalHeader ? undefined : v === null || v === undefined ? null : String(v).slice(0, MAX_CELL_CHARS);
     }
     return { row: i + 1, cells };
   });

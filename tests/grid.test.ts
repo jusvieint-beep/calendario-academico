@@ -15,11 +15,11 @@ const cells = (p: Partial<GridCells>): GridCells => ({ ...emptyCells(), ...p });
 test('evento publicado → fila del editor con los mismos formatos de la plantilla', () => {
   const c = eventToCells({
     event_id: 'EVT-0001', category: 'SESION', type_label: 'SESION_ZAJUNA', title: 'Matemáticas',
-    event_date: '2026-10-05', start_time: '08:00', end_time: null, link: null, description: 'U3'
+    event_date: '2026-10-05', start_time: '08:00', end_time: null, link: null, description: 'U3', instructor: 'Ana Pérez'
   });
   assert.deepEqual(c, {
     ID_EVENTO: 'EVT-0001', TIPO: 'SESION_ZAJUNA', NOMBRE: 'Matemáticas', FECHA: '05/10/2026',
-    HORA_INICIO: '08:00', HORA_FIN: '', LINK: '', DESCRIPCION: 'U3'
+    HORA_INICIO: '08:00', HORA_FIN: '', LINK: '', DESCRIPCION: 'U3', INSTRUCTOR: 'Ana Pérez'
   });
 });
 
@@ -120,4 +120,26 @@ test('servidor: las filas del editor se validan igual que un Excel, numeradas co
 
   assert.equal(checkGridRows('no es una lista').ok, false);
   assert.equal(checkGridRows([{ TIPO: 7, NOMBRE: null }]).ok, false, 'tolera datos con forma incorrecta sin romperse');
+});
+
+test('pegar sin encabezados con la columna INSTRUCTOR: se ubica igual (con o sin ID)', () => {
+  const sinId = matrixToCells([['Sesión Zajuna', 'Física', '10/10/2026', '08:00', '10:00', '', '', 'Ana Pérez']]);
+  assert.equal(sinId[0].TIPO, 'SESION_ZAJUNA');
+  assert.equal(sinId[0].INSTRUCTOR, 'Ana Pérez');
+  const conId = matrixToCells([['EVT-0007', 'SESION_ADICIONAL', 'Refuerzo', '11/10/2026', '14:00', '', '', '', 'Luis Gómez']]);
+  assert.equal(conId[0].ID_EVENTO, 'EVT-0007');
+  assert.equal(conId[0].INSTRUCTOR, 'Luis Gómez');
+});
+
+test('editor: el instructor viaja con la fila y se ignora en tipos que no son sesión', () => {
+  const r = checkGridRows([
+    cells({ TIPO: 'SESION_ZAJUNA', NOMBRE: 'Física', FECHA: '10/10/2026', HORA_INICIO: '08:00', INSTRUCTOR: ' Ana   Pérez ' }),
+    cells({ TIPO: 'ENTREGA', NOMBRE: 'Taller', FECHA: '10/10/2026', INSTRUCTOR: 'Alguien' })
+  ]);
+  assert.ok(r.ok);
+  if (r.ok) {
+    assert.equal(r.rows[0].instructor, 'Ana Pérez');
+    assert.equal(r.rows[1].instructor, null);
+    assert.ok(r.warnings.some((w) => w.row === 2 && w.column === 'INSTRUCTOR'));
+  }
 });

@@ -4,13 +4,15 @@ export const MAX_ROWS = 2000;
 export const TEMPLATE_ROWS = 1000;
 
 export type ColumnKey =
-  | 'ID_EVENTO' | 'TIPO' | 'NOMBRE' | 'FECHA' | 'HORA_INICIO' | 'HORA_FIN' | 'LINK' | 'DESCRIPCION';
+  | 'ID_EVENTO' | 'TIPO' | 'NOMBRE' | 'FECHA' | 'HORA_INICIO' | 'HORA_FIN' | 'LINK' | 'DESCRIPCION' | 'INSTRUCTOR';
 
 export interface ColumnDef {
   key: ColumnKey;
   required: boolean;
   width: number;
   hint: string;
+  /** La columna puede faltar en archivos antiguos (no es error). */
+  optionalHeader?: boolean;
 }
 
 export const COLUMNS: ColumnDef[] = [
@@ -21,7 +23,8 @@ export const COLUMNS: ColumnDef[] = [
   { key: 'HORA_INICIO', required: false, width: 13, hint: 'Obligatoria para SESION_ZAJUNA, SESION_ADICIONAL y DUDAS (hh:mm, 24 h). En GRABACION es opcional (desde qué hora está disponible). En ENTREGA/CUESTIONARIO/FORO es la hora límite; vacía = 11:59 PM.' },
   { key: 'HORA_FIN', required: false, width: 11, hint: 'Opcional. Debe ser posterior a HORA_INICIO. Solo aplica a sesiones y dudas.' },
   { key: 'LINK', required: false, width: 40, hint: 'Opcional. Debe empezar por https:// o http://' },
-  { key: 'DESCRIPCION', required: false, width: 46, hint: 'Opcional. Máximo 2.000 caracteres.' }
+  { key: 'DESCRIPCION', required: false, width: 46, hint: 'Opcional. Máximo 2.000 caracteres.' },
+  { key: 'INSTRUCTOR', required: false, width: 28, optionalHeader: true, hint: 'Opcional. Persona que dicta la sesión. Solo para SESION_ZAJUNA y SESION_ADICIONAL. Máximo 120 caracteres.' }
 ];
 
 /** 'Hora inicio', 'HORA-INICIO', 'Descripción' → 'HORA_INICIO', 'DESCRIPCION' */

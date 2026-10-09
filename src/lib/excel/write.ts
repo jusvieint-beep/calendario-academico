@@ -41,7 +41,7 @@ export async function buildCalendarWorkbook(events: CalendarEvent[] = []): Promi
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: c.required ? DARK : GREY } };
     cell.alignment = { horizontal: 'center', vertical: 'middle' };
   });
-  ws.autoFilter = { from: 'A1', to: 'H1' };
+  ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: COLUMNS.length } };
 
   events.forEach((e) => {
     ws.addRow({
@@ -52,7 +52,8 @@ export async function buildCalendarWorkbook(events: CalendarEvent[] = []): Promi
       HORA_INICIO: e.start_time ? excelTime(e.start_time) : null,
       HORA_FIN: e.end_time ? excelTime(e.end_time) : null,
       LINK: e.link ?? null,
-      DESCRIPCION: e.description ?? null
+      DESCRIPCION: e.description ?? null,
+      INSTRUCTOR: e.instructor ?? null
     });
   });
 
@@ -110,6 +111,7 @@ export async function buildCalendarWorkbook(events: CalendarEvent[] = []): Promi
     ['• No cambies el nombre de la hoja «Calendario» ni los encabezados de la fila 1.', 'p'],
     ['• Fechas y horas de Colombia (UTC-5). Horas en formato 24 h: 08:00, 14:30, 23:59.', 'p'],
     ['• SESION_ZAJUNA (prioritaria), SESION_ADICIONAL y DUDAS (espacio de dudas por chat) necesitan HORA_INICIO. GRABACION se muestra desde su fecha (hora opcional). En ENTREGA, CUESTIONARIO y FORO, HORA_INICIO es la hora límite; vacía = 11:59 PM.', 'p'],
+    ['• INSTRUCTOR (opcional): persona que dicta la sesión. Solo se usa en SESION_ZAJUNA y SESION_ADICIONAL.', 'p'],
     ['• Un archivo con errores no modifica nada. La app indica fila, columna y cómo corregir cada error.', 'p']
   ];
   lines.forEach(([text, kind], i) => {
