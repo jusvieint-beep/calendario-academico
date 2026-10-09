@@ -63,10 +63,10 @@ function WaText({ text }: { text: string }) {
 function KeyHelp() {
   return (
     <ol className="wa-help">
-      <li>Desde el celular del número a agregar, guarda en contactos <b>+34 623 91 22 04</b>.</li>
-      <li>Envíale por WhatsApp exactamente: <code>I allow callmebot to send me messages</code></li>
+      <li>Desde el celular del número a agregar, guarda en contactos el bot de CallMeBot: <b>+34 644 97 54 14</b> (el anterior, +34 623 91 22 04, está lleno).</li>
+      <li>Envíale por WhatsApp exactamente la frase que indique el bot, por ejemplo: <code>I allow callmebot to send me messages</code></li>
       <li>Responderá con la <b>apikey</b> de ese número. Cada número tiene su propia clave.</li>
-      <li>Si no responde en 2 minutos, vuelve a intentarlo en 24 horas.</li>
+      <li>Si el bot responde que está lleno, guarda el nuevo número que indique y repite el paso 2 con ese.</li>
     </ol>
   );
 }

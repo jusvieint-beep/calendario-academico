@@ -166,7 +166,7 @@ Si te equivocas, en **Historial de importaciones** pulsa **Deshacer** en esa act
 
 Panel `/admin` → **Recordatorio por WhatsApp**. Usa la API gratuita de CallMeBot, que es **solo para uso personal**: envía mensajes únicamente al número que la autorizó. No sirve para avisar a estudiantes.
 
-1. Guarda en tus contactos **+34 623 91 22 04** y envíale por WhatsApp: `I allow callmebot to send me messages`.
+1. Guarda en tus contactos el bot de CallMeBot **+34 644 97 54 14** (el anterior, +34 623 91 22 04, está lleno; si el bot dice que está lleno, usa el número nuevo que indique) y envíale la frase de autorización que pida (`I allow callmebot to send me messages`).
 2. Copia la *apikey* que te responde en el panel, revisa tu número y la hora (por defecto 8:00 PM), marca «Enviarme el resumen todos los días» y pulsa **Guardar**.
 3. Pulsa **Enviar prueba**.
 
