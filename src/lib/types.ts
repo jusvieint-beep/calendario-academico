@@ -64,12 +64,12 @@ export interface CalendarEvent {
   end_time: string | null;
   link: string | null;
   description: string | null;
-  /** Persona que dicta la sesión (solo Sesión Zajuna y Sesión adicional). */
+  /** Persona que dicta la sesión (Sesión Zajuna, Sesión adicional y su grabación). */
   instructor: string | null;
 }
 
-/** Tipos que pueden tener instructor. */
-export const INSTRUCTOR_TYPES: readonly TypeLabel[] = ['SESION_ZAJUNA', 'SESION_ADICIONAL'];
+/** Tipos que pueden tener instructor (la grabación lleva el de la sesión grabada). */
+export const INSTRUCTOR_TYPES: readonly TypeLabel[] = ['SESION_ZAJUNA', 'SESION_ADICIONAL', 'GRABACION'];
 
 /** Fila del Excel ya validada y normalizada, lista para enviar a Supabase. */
 export interface ImportRow {

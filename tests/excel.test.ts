@@ -355,10 +355,11 @@ test('INSTRUCTOR: solo en Sesión Zajuna y adicional, máximo 120 caracteres; Ex
   const r = validateRows([
     row(2, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'Física', FECHA: '10/10/2026', HORA_INICIO: '08:00', INSTRUCTOR: 'Ana Pérez' }),
     row(3, { TIPO: 'SESION_ADICIONAL', NOMBRE: 'Refuerzo', FECHA: '10/10/2026', HORA_INICIO: '14:00' }),
-    row(4, { TIPO: 'DUDAS', NOMBRE: 'Dudas', FECHA: '10/10/2026', HORA_INICIO: '18:00', INSTRUCTOR: 'Ana Pérez' })
+    row(4, { TIPO: 'DUDAS', NOMBRE: 'Dudas', FECHA: '10/10/2026', HORA_INICIO: '18:00', INSTRUCTOR: 'Ana Pérez' }),
+    row(5, { TIPO: 'GRABACION', NOMBRE: 'Física', FECHA: '10/10/2026', HORA_INICIO: '08:00', INSTRUCTOR: 'Ana Pérez' }) // misma instructora, mismo día: su grabación
   ], TODAY);
   assert.equal(r.errors.length, 0);
-  assert.deepEqual(r.rows.map((x) => x.instructor), ['Ana Pérez', null, null]);
+  assert.deepEqual(r.rows.map((x) => x.instructor), ['Ana Pérez', null, null, 'Ana Pérez']);
   assert.ok(r.warnings.some((w) => w.row === 4 && w.column === 'INSTRUCTOR'), 'en dudas se ignora con aviso');
 
   const largo = validateRows([row(2, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'X', FECHA: '10/10/2026', HORA_INICIO: '08:00', INSTRUCTOR: 'a'.repeat(121) })], TODAY);
@@ -369,4 +370,13 @@ test('INSTRUCTOR: solo en Sesión Zajuna y adicional, máximo 120 caracteres; Ex
   assert.equal(viejo.errors.length, 0);
   assert.equal('instructor' in viejo.rows[0], false);
   assert.ok(viejo.warnings.some((w) => w.row === 0 && w.column === 'INSTRUCTOR'));
+});
+
+test('duplicados con instructor: mismo nombre, fecha y hora con instructores distintos no es duplicado', () => {
+  const r = validateRows([
+    row(2, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'Física', FECHA: '10/10/2026', HORA_INICIO: '08:00', INSTRUCTOR: 'Ana Pérez' }),
+    row(3, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'Física', FECHA: '10/10/2026', HORA_INICIO: '08:00', INSTRUCTOR: 'Luis Gómez' }),
+    row(4, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'física', FECHA: '10/10/2026', HORA_INICIO: '08:00', INSTRUCTOR: 'ana perez' })
+  ], TODAY);
+  assert.deepEqual(r.errors.map((e) => e.row), [4], 'misma sesión con la misma instructora sí es duplicada');
 });

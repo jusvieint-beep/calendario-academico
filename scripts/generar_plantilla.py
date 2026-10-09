@@ -44,7 +44,7 @@ COLUMNS = [
     ("HORA_FIN", 11, "Solo para sesiones y dudas. Debe ser posterior a la hora de inicio."),
     ("LINK", 42, "Enlace de la sesión, del chat de dudas o del recurso (https://...). Opcional."),
     ("DESCRIPCION", 46, "Información adicional. Opcional. Máximo 2.000 caracteres."),
-    ("INSTRUCTOR", 28, "Persona que dicta la sesión. Opcional. Solo para SESION_ZAJUNA y SESION_ADICIONAL."),
+    ("INSTRUCTOR", 28, "Persona que dicta la sesión. Opcional. Para SESION_ZAJUNA, SESION_ADICIONAL y GRABACION."),
 ]
 
 
@@ -187,7 +187,7 @@ def build_instructions_sheet(wb):
             ["HORA_FIN", "No", "HH:MM (24 h)", "10:00", "Solo para sesiones y dudas. Debe ser posterior a la hora de inicio. Sin hora fin, se considera de 1 hora."],
             ["LINK", "No", "https://…", "https://meet.google.com/abc", "Sesiones: botón «Ingresar a la sesión». Dudas: botón «Ir al chat de dudas» (agrégalo cuando se tenga). Sin enlace se publica sin botón."],
             ["DESCRIPCION", "No", "Texto", "Traer calculadora", "Máximo 2.000 caracteres."],
-            ["INSTRUCTOR", "No", "Texto", "Ana Pérez", "Quién dicta la sesión. Solo en SESION_ZAJUNA y SESION_ADICIONAL; en otros tipos se ignora. Máximo 120 caracteres."],
+            ["INSTRUCTOR", "No", "Texto", "Ana Pérez", "Quién dicta la sesión. En SESION_ZAJUNA, SESION_ADICIONAL y GRABACION (la grabación lleva el instructor de la sesión; puede repetirse el mismo día); en otros tipos se ignora. Máximo 120 caracteres."],
         ],
     )
     row += 1
@@ -199,7 +199,7 @@ def build_instructions_sheet(wb):
             ["EVT-0001", "SESION_ZAJUNA", "Matemáticas II", "05/10/2026 · 08:00 – 10:00", "https://zajuna.sena.edu.co/… · Unidad 3 · Instructor: Ana Pérez"],
             ["(vacío)", "SESION_ADICIONAL", "Refuerzo de Matemáticas", "06/10/2026 · 18:00 – 19:00", "https://meet.google.com/abc"],
             ["(vacío)", "DUDAS", "Resolución de dudas", "07/10/2026 · 19:00 – 20:00", "Enlace al chat cuando se tenga"],
-            ["(vacío)", "GRABACION", "Grabación: Matemáticas II", "05/10/2026 · sin hora", "https://youtu.be/abc · Clase del 5 de octubre"],
+            ["(vacío)", "GRABACION", "Grabación: Matemáticas II", "05/10/2026 · sin hora", "https://youtu.be/abc · Clase del 5 de octubre · Instructor: Ana Pérez"],
             ["EVT-0002", "ENTREGA", "Taller 2", "06/10/2026 · 23:59", "Subir en PDF"],
             ["(vacío)", "CUESTIONARIO", "Quiz unidad 2", "08/10/2026 · sin hora", "Vence a las 11:59 PM de ese día"],
             ["(vacío)", "FORO", "Foro: la complejidad de la vida", "07/03/2027 · 23:59", "Participación en el foro de la plataforma"],

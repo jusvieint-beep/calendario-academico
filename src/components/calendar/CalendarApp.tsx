@@ -320,6 +320,7 @@ export default function CalendarApp({ events, serverNow, loadError }: Props) {
             <dl className="kv">
               <dt>Disponible desde</dt><dd>{capitalize(formatDate(detail.event_date, true, true))}{detail.start_time ? ` · ${formatTime(detail.start_time)}` : ''}</dd>
               <dt>Tipo</dt><dd>{kindName(detail)}</dd>
+              {detail.instructor && (<><dt>Instructor</dt><dd>{detail.instructor}</dd></>)}
               <dt>Estado</dt><dd>{statusBadge(detail)}</dd>
               {detail.description && (<><dt>Descripción</dt><dd>{detail.description}</dd></>)}
             </dl>

@@ -149,12 +149,12 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
       err(row, 'DESCRIPCION', cells.DESCRIPCION, `La descripción tiene ${description.length} caracteres; el máximo es ${DESCRIPTION_MAX}.`, 'Acórtala.');
     }
 
-    // INSTRUCTOR (solo Sesión Zajuna y Sesión adicional)
+    // INSTRUCTOR (Sesión Zajuna, Sesión adicional y Grabación). Puede repetirse el mismo día: sesión + su grabación.
     let instructor: string | null | undefined = hasInstructorColumn ? cellToText(cells.INSTRUCTOR).replace(/\s+/g, ' ') || null : undefined;
     if (instructor && instructor.length > INSTRUCTOR_MAX) {
       err(row, 'INSTRUCTOR', cells.INSTRUCTOR, `El nombre del instructor tiene ${instructor.length} caracteres; el máximo es ${INSTRUCTOR_MAX}.`, 'Acórtalo.');
     } else if (instructor && type && !INSTRUCTOR_TYPES.includes(type)) {
-      warn(row, 'INSTRUCTOR', cells.INSTRUCTOR, 'El instructor solo aplica a SESION_ZAJUNA y SESION_ADICIONAL; se ignorará.', 'Deja la celda vacía en este tipo de evento.');
+      warn(row, 'INSTRUCTOR', cells.INSTRUCTOR, 'El instructor solo aplica a SESION_ZAJUNA, SESION_ADICIONAL y GRABACION; se ignorará.', 'Deja la celda vacía en este tipo de evento.');
       instructor = null;
     }
 
@@ -166,11 +166,13 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
 
     // Duplicados: mismo tipo (sesión Zajuna, sesión adicional, dudas, grabación, entrega, cuestionario o foro), nombre, fecha y hora → error, no se guarda.
     // El nombre se compara sin mayúsculas, tildes ni espacios repetidos.
+    // Dos sesiones iguales con instructores distintos (p. ej. dos grupos) no son duplicadas.
     const signature = [
       type,
       stripAccents(title).toLowerCase(),
       date,
-      start ?? (isSession ? '' : 'sin hora')
+      start ?? (isSession ? '' : 'sin hora'),
+      instructor ? stripAccents(instructor).toLowerCase() : ''
     ].join('|');
     const firstRow = seenSignature.get(signature);
     if (firstRow !== undefined) {

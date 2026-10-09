@@ -111,7 +111,7 @@ export async function buildCalendarWorkbook(events: CalendarEvent[] = []): Promi
     ['• No cambies el nombre de la hoja «Calendario» ni los encabezados de la fila 1.', 'p'],
     ['• Fechas y horas de Colombia (UTC-5). Horas en formato 24 h: 08:00, 14:30, 23:59.', 'p'],
     ['• SESION_ZAJUNA (prioritaria), SESION_ADICIONAL y DUDAS (espacio de dudas por chat) necesitan HORA_INICIO. GRABACION se muestra desde su fecha (hora opcional). En ENTREGA, CUESTIONARIO y FORO, HORA_INICIO es la hora límite; vacía = 11:59 PM.', 'p'],
-    ['• INSTRUCTOR (opcional): persona que dicta la sesión. Solo se usa en SESION_ZAJUNA y SESION_ADICIONAL.', 'p'],
+    ['• INSTRUCTOR (opcional): persona que dicta la sesión. Se usa en SESION_ZAJUNA, SESION_ADICIONAL y en su GRABACION (el mismo instructor puede repetirse el mismo día).', 'p'],
     ['• Un archivo con errores no modifica nada. La app indica fila, columna y cómo corregir cada error.', 'p']
   ];
   lines.forEach(([text, kind], i) => {

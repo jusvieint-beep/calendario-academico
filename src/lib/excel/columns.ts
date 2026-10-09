@@ -24,7 +24,7 @@ export const COLUMNS: ColumnDef[] = [
   { key: 'HORA_FIN', required: false, width: 11, hint: 'Opcional. Debe ser posterior a HORA_INICIO. Solo aplica a sesiones y dudas.' },
   { key: 'LINK', required: false, width: 40, hint: 'Opcional. Debe empezar por https:// o http://' },
   { key: 'DESCRIPCION', required: false, width: 46, hint: 'Opcional. Máximo 2.000 caracteres.' },
-  { key: 'INSTRUCTOR', required: false, width: 28, optionalHeader: true, hint: 'Opcional. Persona que dicta la sesión. Solo para SESION_ZAJUNA y SESION_ADICIONAL. Máximo 120 caracteres.' }
+  { key: 'INSTRUCTOR', required: false, width: 28, optionalHeader: true, hint: 'Opcional. Persona que dicta la sesión. Para SESION_ZAJUNA, SESION_ADICIONAL y GRABACION. Máximo 120 caracteres.' }
 ];
 
 /** 'Hora inicio', 'HORA-INICIO', 'Descripción' → 'HORA_INICIO', 'DESCRIPCION' */

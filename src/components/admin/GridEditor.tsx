@@ -67,7 +67,7 @@ function placeholderFor(key: ColumnKey, category: string): string | undefined {
     if (key === 'HORA_FIN') return 'No aplica';
     if (key === 'LINK') return 'https://… (enlace a la grabación)';
   }
-  if (key === 'INSTRUCTOR') return category === 'SESION_ZAJUNA' || category === 'SESION_ADICIONAL' ? 'Quién dicta la sesión' : category ? 'No aplica' : 'Opcional';
+  if (key === 'INSTRUCTOR') return category === 'SESION_ZAJUNA' || category === 'SESION_ADICIONAL' ? 'Quién dicta la sesión' : category === 'GRABACION' ? 'Quién dictó la sesión' : category ? 'No aplica' : 'Opcional';
   if (category === 'DUDAS' && key === 'LINK') return 'https://… (enlace al chat, cuando se tenga)';
   if (category === 'ENTREGA' || category === 'FORO' || category === 'CUESTIONARIO') {
     if (key === 'HORA_INICIO') return '23:59';
