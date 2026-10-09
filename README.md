@@ -179,6 +179,23 @@ Cómo funciona (`supabase/migrations/0002_whatsapp_recordatorios.sql`):
 - La clave se guarda cifrada en **Supabase Vault** (`callmebot_apikey`). Las tablas `notify_settings` y `notification_log` no son accesibles desde el navegador; solo las funciones `notify_*`, que verifican `is_admin()`.
 - La bitácora (últimos envíos, errores de CallMeBot) se ve en el mismo panel. Máximo 5 pruebas por hora.
 
+### Varios números (0004_varios_destinatarios.sql)
+
+En el panel, «+ Agregar otro número» registra más destinatarios. **Cada número necesita su propia apikey** (la clave de CallMeBot queda amarrada al número que la activó). Cada destinatario se puede probar, pausar, editar o quitar (se archiva y su historial se conserva). Cada mensaje se envía una vez a cada número activo; si uno falla, los demás reciben igual.
+
+Paso único en Supabase (SQL Editor), necesario antes de agregar el segundo número; reemplaza dos índices de la bitácora, no borra datos:
+
+```sql
+drop index if exists public.notification_log_one_digest_per_day;
+drop index if exists public.notification_log_one_reminder;
+create unique index if not exists notification_log_digest_once
+  on public.notification_log (target_date, coalesce(recipient, '')) where kind = 'digest' and status in ('sent', 'skipped');
+create unique index if not exists notification_log_reminder_once
+  on public.notification_log (event_key, coalesce(recipient, '')) where kind = 'reminder' and status = 'sent';
+```
+
+Mientras no se ejecute, el panel no deja agregar un segundo número (mensaje «Falta un paso de configuración»).
+
 ## 8. Desarrollo local (opcional)
 
 Requiere Node.js 20 o superior.

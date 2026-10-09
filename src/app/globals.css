@@ -415,3 +415,17 @@ table.sheet { width: 100%; min-width: 1120px; border-collapse: separate; border-
 .hist-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
 .hist-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
 .hist-scroll::-webkit-scrollbar-track { background: transparent; }
+
+/* Recordatorio por WhatsApp: lista de números */
+.wa-recipients { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.wa-recipients li { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 10px 12px; border: 1px solid var(--border-soft); border-radius: 10px; background: var(--surface-2); }
+.wa-recipients li.off { opacity: 0.6; }
+.wa-rec-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.wa-rec-main b { font-size: 13.5px; }
+.wa-rec-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.wa-add { align-self: flex-start; }
+.wa-rec-form { display: flex; flex-direction: column; gap: 12px; padding: 14px; border: 1px dashed var(--border); border-radius: 10px; }
+.wa-rec-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.wa-general { display: flex; flex-direction: column; gap: 14px; padding-top: 14px; border-top: 1px solid var(--border-soft); }
+.wa-log-to { font-weight: 500; color: var(--text-dim); }
+@media (max-width: 520px) { .wa-rec-fields { grid-template-columns: minmax(0, 1fr); } }
