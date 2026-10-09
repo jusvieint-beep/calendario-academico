@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ImportRecord, SyncResult } from '@/lib/types';
 import { formatInstant } from '@/lib/dates';
@@ -13,12 +13,29 @@ interface Props {
   version: number;
 }
 
+const VISIBLE_ROWS = 5;
+
 export default function HistoryPanel({ imports }: Props) {
   const router = useRouter();
   const [target, setTarget] = useState<ImportRecord | null>(null);
   const [preview, setPreview] = useState<SyncResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  // Se ven las 5 más recientes; el resto, desplazándose dentro del recuadro (encabezado fijo).
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [maxHeight, setMaxHeight] = useState<number | undefined>(undefined);
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const measure = () => {
+      const head = el.querySelector('thead')?.getBoundingClientRect().height ?? 0;
+      const rows = Array.from(el.querySelectorAll('tbody tr')).slice(0, VISIBLE_ROWS);
+      setMaxHeight(imports.length > VISIBLE_ROWS ? Math.ceil(head + rows.reduce((h, tr) => h + tr.getBoundingClientRect().height, 0)) + 2 : undefined);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [imports]);
 
   const call = async (importId: string, dryRun: boolean, expectedVersion?: number) => {
     const res = await fetch('/api/import/restore', {
@@ -68,7 +85,10 @@ export default function HistoryPanel({ imports }: Props) {
     <section className="box" aria-labelledby="history-title">
       <div className="box-head">
         <h2 id="history-title">Historial de importaciones</h2>
-        <span className="stat-sub">Se conservan los respaldos de las últimas 30 actualizaciones</span>
+        <span className="stat-sub">
+          Se conservan los respaldos de las últimas 30 actualizaciones
+          {imports.length > VISIBLE_ROWS && <> · {imports.length} en total, desplázate para ver las anteriores</>}
+        </span>
       </div>
 
       {message && !target && (
@@ -78,7 +98,7 @@ export default function HistoryPanel({ imports }: Props) {
       {imports.length === 0 ? (
         <div className="empty"><b>Aún no hay importaciones</b>Cuando cargues el primer Excel aparecerá aquí.</div>
       ) : (
-        <div className="table-wrap">
+        <div className="table-wrap hist-scroll" ref={scrollRef} style={{ maxHeight }} tabIndex={0} aria-label="Historial de importaciones (desplázate para ver más)">
           <table>
             <thead>
               <tr><th>Fecha</th><th>Archivo</th><th>Realizada por</th><th>Creados</th><th>Actualizados</th><th>Eliminados</th><th>Total</th><th>Estado</th><th /></tr>

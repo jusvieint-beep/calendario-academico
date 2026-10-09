@@ -408,3 +408,10 @@ table.sheet { width: 100%; min-width: 1120px; border-collapse: separate; border-
 /* Filtro por tipo del editor (/admin), selección múltiple */
 .type-filter { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
 .type-filter-label { font-size: 12px; font-weight: 700; color: var(--text-dim); margin-right: 2px; }
+
+/* Historial de importaciones: 5 visibles, el resto con barra de desplazamiento */
+.hist-scroll { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+.hist-scroll thead th { position: sticky; top: 0; z-index: 1; }
+.hist-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.hist-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
+.hist-scroll::-webkit-scrollbar-track { background: transparent; }
