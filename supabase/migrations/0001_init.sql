@@ -276,14 +276,14 @@ begin
      where t.rn = s.rn;
   end if;
 
-  -- Sin columna INSTRUCTOR en el archivo: se conserva el guardado. Solo las sesiones Zajuna, adicionales y grabaciones tienen instructor.
+  -- Sin columna INSTRUCTOR en el archivo: se conserva el guardado. Solo las sesiones (Zajuna, adicionales, dudas) y grabaciones tienen instructor.
   update _incoming i
      set instructor = e.instructor
     from public.events e
    where not i.has_instructor and e.event_id = i.event_id;
   update _incoming
      set instructor = null
-   where instructor is not null and type_label not in ('SESION_ZAJUNA', 'SESION_ADICIONAL', 'GRABACION');
+   where instructor is not null and category not in ('SESION', 'GRABACION');
 
   alter table _incoming add column content_hash text;
   -- Supabase exige WHERE en todo UPDATE (extensión safeupdate).

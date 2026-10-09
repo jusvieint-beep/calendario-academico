@@ -149,12 +149,12 @@ export function validateRows(raw: RawRow[], today: string): ValidationResult {
       err(row, 'DESCRIPCION', cells.DESCRIPCION, `La descripción tiene ${description.length} caracteres; el máximo es ${DESCRIPTION_MAX}.`, 'Acórtala.');
     }
 
-    // INSTRUCTOR (Sesión Zajuna, Sesión adicional y Grabación). Puede repetirse el mismo día: sesión + su grabación.
+    // INSTRUCTOR (cualquier sesión: Zajuna, adicional, dudas; y Grabación). Puede repetirse el mismo día: sesión + su grabación.
     let instructor: string | null | undefined = hasInstructorColumn ? cellToText(cells.INSTRUCTOR).replace(/\s+/g, ' ') || null : undefined;
     if (instructor && instructor.length > INSTRUCTOR_MAX) {
       err(row, 'INSTRUCTOR', cells.INSTRUCTOR, `El nombre del instructor tiene ${instructor.length} caracteres; el máximo es ${INSTRUCTOR_MAX}.`, 'Acórtalo.');
     } else if (instructor && type && !INSTRUCTOR_TYPES.includes(type)) {
-      warn(row, 'INSTRUCTOR', cells.INSTRUCTOR, 'El instructor solo aplica a SESION_ZAJUNA, SESION_ADICIONAL y GRABACION; se ignorará.', 'Deja la celda vacía en este tipo de evento.');
+      warn(row, 'INSTRUCTOR', cells.INSTRUCTOR, 'El instructor solo aplica a sesiones (SESION_ZAJUNA, SESION_ADICIONAL, DUDAS) y GRABACION; se ignorará.', 'Deja la celda vacía en este tipo de evento.');
       instructor = null;
     }
 

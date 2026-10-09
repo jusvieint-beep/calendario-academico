@@ -44,7 +44,7 @@ COLUMNS = [
     ("HORA_FIN", 11, "Solo para sesiones y dudas. Debe ser posterior a la hora de inicio."),
     ("LINK", 42, "Enlace de la sesión, del chat de dudas o del recurso (https://...). Opcional."),
     ("DESCRIPCION", 46, "Información adicional. Opcional. Máximo 2.000 caracteres."),
-    ("INSTRUCTOR", 28, "Persona que dicta la sesión. Opcional. Para SESION_ZAJUNA, SESION_ADICIONAL y GRABACION."),
+    ("INSTRUCTOR", 28, "Persona que dicta la sesión. Opcional. Para SESION_ZAJUNA, SESION_ADICIONAL, DUDAS y GRABACION."),
 ]
 
 
@@ -187,7 +187,7 @@ def build_instructions_sheet(wb):
             ["HORA_FIN", "No", "HH:MM (24 h)", "10:00", "Solo para sesiones y dudas. Debe ser posterior a la hora de inicio. Sin hora fin, se considera de 1 hora."],
             ["LINK", "No", "https://…", "https://meet.google.com/abc", "Sesiones: botón «Ingresar a la sesión». Dudas: botón «Ir al chat de dudas» (agrégalo cuando se tenga). Sin enlace se publica sin botón."],
             ["DESCRIPCION", "No", "Texto", "Traer calculadora", "Máximo 2.000 caracteres."],
-            ["INSTRUCTOR", "No", "Texto", "Ana Pérez", "Quién dicta la sesión. En SESION_ZAJUNA, SESION_ADICIONAL y GRABACION (la grabación lleva el instructor de la sesión; puede repetirse el mismo día); en otros tipos se ignora. Máximo 120 caracteres."],
+            ["INSTRUCTOR", "No", "Texto", "Ana Pérez", "Quién dicta la sesión. En cualquier sesión (SESION_ZAJUNA, SESION_ADICIONAL, DUDAS) y GRABACION (la grabación lleva el instructor de la sesión; puede repetirse el mismo día); en otros tipos se ignora. Máximo 120 caracteres."],
         ],
     )
     row += 1

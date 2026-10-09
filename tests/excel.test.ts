@@ -355,12 +355,14 @@ test('INSTRUCTOR: solo en Sesión Zajuna y adicional, máximo 120 caracteres; Ex
   const r = validateRows([
     row(2, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'Física', FECHA: '10/10/2026', HORA_INICIO: '08:00', INSTRUCTOR: 'Ana Pérez' }),
     row(3, { TIPO: 'SESION_ADICIONAL', NOMBRE: 'Refuerzo', FECHA: '10/10/2026', HORA_INICIO: '14:00' }),
-    row(4, { TIPO: 'DUDAS', NOMBRE: 'Dudas', FECHA: '10/10/2026', HORA_INICIO: '18:00', INSTRUCTOR: 'Ana Pérez' }),
+    row(4, { TIPO: 'DUDAS', NOMBRE: 'Dudas', FECHA: '10/10/2026', HORA_INICIO: '08:00', INSTRUCTOR: 'Ana Pérez' }), // misma fecha y hora: permitido
     row(5, { TIPO: 'GRABACION', NOMBRE: 'Física', FECHA: '10/10/2026', HORA_INICIO: '08:00', INSTRUCTOR: 'Ana Pérez' }) // misma instructora, mismo día: su grabación
   ], TODAY);
   assert.equal(r.errors.length, 0);
-  assert.deepEqual(r.rows.map((x) => x.instructor), ['Ana Pérez', null, null, 'Ana Pérez']);
-  assert.ok(r.warnings.some((w) => w.row === 4 && w.column === 'INSTRUCTOR'), 'en dudas se ignora con aviso');
+  assert.deepEqual(r.rows.map((x) => x.instructor), ['Ana Pérez', null, 'Ana Pérez', 'Ana Pérez']);
+  assert.ok(!r.warnings.some((w) => w.column === 'INSTRUCTOR'), 'en sesiones, dudas y grabaciones no hay aviso');
+  const ent = validateRows([row(2, { TIPO: 'ENTREGA', NOMBRE: 'Taller', FECHA: '10/10/2026', INSTRUCTOR: 'Ana Pérez' })], TODAY);
+  assert.equal(ent.rows[0].instructor, null, 'en entregas se ignora con aviso');
 
   const largo = validateRows([row(2, { TIPO: 'SESION_ZAJUNA', NOMBRE: 'X', FECHA: '10/10/2026', HORA_INICIO: '08:00', INSTRUCTOR: 'a'.repeat(121) })], TODAY);
   assert.ok(largo.errors.some((e) => e.column === 'INSTRUCTOR'));
