@@ -14,7 +14,7 @@
  */
 import { useEffect, useMemo, useRef, useState, type ClipboardEvent, type KeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { TYPE_LABELS, type CalendarEvent, type RowIssue, type SyncResult } from '@/lib/types';
+import { TYPE_LABELS, type CalendarEvent, type RowIssue, type SyncResult, type TypeLabel } from '@/lib/types';
 import { COLUMNS, type ColumnKey } from '@/lib/excel/columns';
 import { formatInstant } from '@/lib/dates';
 import {
@@ -46,6 +46,16 @@ const PLACEHOLDER: Partial<Record<ColumnKey, string>> = {
   DESCRIPCION: 'Opcional',
   INSTRUCTOR: 'Opcional'
 };
+/** Filtro por tipo: nombre visible y color (los mismos del calendario). */
+const TYPE_FILTERS: [TypeLabel, string, string, string][] = [
+  ['SESION_ZAJUNA', 'Sesiones Zajuna', 'var(--ses)', 'var(--ses-soft)'],
+  ['SESION_ADICIONAL', 'Sesiones adicionales', 'var(--adi)', 'var(--adi-soft)'],
+  ['DUDAS', 'Dudas', 'var(--dud)', 'var(--dud-soft)'],
+  ['GRABACION', 'Grabaciones', 'var(--rec)', 'var(--rec-soft)'],
+  ['ENTREGA', 'Entregas', 'var(--ent)', 'var(--ent-soft)'],
+  ['CUESTIONARIO', 'Cuestionarios', 'var(--quiz)', 'var(--quiz-soft)'],
+  ['FORO', 'Foros', 'var(--foro)', 'var(--foro-soft)']
+];
 const BIG_DELETE_RATIO = 0.3;
 const EMPTY_START_ROWS = 5;
 const MAX_LISTED_ERRORS = 15;
@@ -91,6 +101,8 @@ export default function GridEditor({ events, today }: { events: CalendarEvent[];
   const [removed, setRemoved] = useState<Row[]>([]);
   const [query, setQuery] = useState('');
   const [hidePast, setHidePast] = useState(false);
+  /** Tipos seleccionados en el filtro (vacío = todos). Solo cambia lo que se ve; al guardar se usa la tabla completa. */
+  const [typeFilter, setTypeFilter] = useState<Set<TypeLabel>>(() => new Set());
   const [issues, setIssues] = useState<IssueMap>({});
   const [generalErrors, setGeneralErrors] = useState<RowIssue[]>([]);
   const [warnings, setWarnings] = useState<RowIssue[]>([]);
@@ -122,11 +134,19 @@ export default function GridEditor({ events, today }: { events: CalendarEvent[];
   const dirty = stats.added + stats.changed + stats.removed > 0;
 
   const q = query.trim().toLowerCase();
-  const filtering = q !== '' || hidePast;
+  const filtering = q !== '' || hidePast || typeFilter.size > 0;
+  const typeCounts = useMemo(() => {
+    const c = {} as Record<string, number>;
+    for (const r of rows) if (!isBlankRow(r.cells)) { const t = normalizeType(r.cells.TIPO); c[t] = (c[t] ?? 0) + 1; }
+    return c;
+  }, [rows]);
+  const toggleType = (t: TypeLabel) =>
+    setTypeFilter((prev) => { const next = new Set(prev); if (next.has(t)) next.delete(t); else next.add(t); return next; });
   const visible = rows
     .map((r, index) => ({ r, index }))
     .filter(({ r }) => {
       if (!r.original) return true; // las filas nuevas siempre se ven
+      if (typeFilter.size && !typeFilter.has(normalizeType(r.cells.TIPO) as TypeLabel)) return false;
       if (hidePast) {
         const d = rowDate(r.cells);
         if (d && d < today) return false;
@@ -271,7 +291,7 @@ export default function GridEditor({ events, today }: { events: CalendarEvent[];
     if (!isMultiCellPaste(text)) return; // pegado normal dentro de una celda
     e.preventDefault();
     if (filtering) {
-      setNotice('Quita la búsqueda y el filtro de eventos pasados para pegar varias celdas.');
+      setNotice('Quita la búsqueda y los filtros (tipo y eventos pasados) para pegar varias celdas.');
       return;
     }
     const matrix = dropHeaderRow(parseClipboard(text));
@@ -338,6 +358,7 @@ export default function GridEditor({ events, today }: { events: CalendarEvent[];
         setGeneralErrors(general);
         setQuery('');
         setHidePast(false);
+        setTypeFilter(new Set());
         setStage('edit');
         if (first) focusCell(first.id, first.key);
         return;
@@ -428,6 +449,31 @@ export default function GridEditor({ events, today }: { events: CalendarEvent[];
               <button className="btn" type="button" onClick={() => { setPasteText(''); setPasteOpen(true); }} disabled={stage === 'checking'}>Pegar desde Excel</button>
               <button className="btn btn-ghost" type="button" onClick={sortByDate} disabled={stage === 'checking'}>Ordenar por fecha</button>
             </div>
+          </div>
+
+          <div className="type-filter" role="group" aria-label="Filtrar por tipo de evento (puedes elegir varios)">
+            <span className="type-filter-label">Tipo:</span>
+            <button
+              type="button"
+              className={`chip${typeFilter.size === 0 ? ' active' : ''}`}
+              aria-pressed={typeFilter.size === 0}
+              onClick={() => setTypeFilter(new Set())}
+            >
+              Todos <span className="count">{stats.total}</span>
+            </button>
+            {TYPE_FILTERS.map(([t, label, c, bg]) => (
+              <button
+                key={t}
+                type="button"
+                className={`chip${typeFilter.has(t) ? ' active' : ''}`}
+                aria-pressed={typeFilter.has(t)}
+                style={{ ['--chip-c' as string]: c, ['--chip-bg' as string]: bg }}
+                onClick={() => toggleType(t)}
+              >
+                <span className="dot" style={{ background: c }} />{label} <span className="count">{typeCounts[t] ?? 0}</span>
+              </button>
+            ))}
+            {typeFilter.size > 1 && <span className="stat-sub">{typeFilter.size} tipos seleccionados</span>}
           </div>
 
           {notice && <div className="note" role="status">{notice}</div>}

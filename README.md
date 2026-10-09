@@ -152,7 +152,7 @@ Desde ahora, cada cambio que subas a la rama `main` de GitHub se publica solo.
 5. **Revisar y guardar**. Si hay errores, las celdas quedan en rojo con el motivo y nada se guarda. Si no, verás la vista previa.
 6. **Confirmar cambios**. Se guarda un respaldo y se aplica todo en una sola operación.
 
-Atajos: Enter baja a la fila siguiente (y crea una al final), Shift+Enter sube, flechas arriba/abajo se mueven entre filas. La búsqueda y «Ocultar eventos pasados» solo cambian lo que ves; al guardar se usa la tabla completa.
+Atajos: Enter baja a la fila siguiente (y crea una al final), Shift+Enter sube, flechas arriba/abajo se mueven entre filas. La búsqueda, el filtro **Tipo** (puedes marcar varios tipos a la vez; «Todos» los quita) y «Ocultar eventos pasados» solo cambian lo que ves; al guardar se usa la tabla completa.
 
 **Opción B · Subir archivo Excel** (recomendada para cargas grandes)
 
